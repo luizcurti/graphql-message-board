@@ -1,16 +1,15 @@
 import React from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 
 import Home from './pages/Home';
 import Board from './pages/Board';
 
-export default function Routes() {
+export default function AppRoutes() {
   return (
-    <Switch>
-      <Route path="/" exact component={Home} />
-      <Route path="/dashboard" component={Board} />
-
-      <Route path="/" component={() => <h1>404 - Page not found</h1>} />
-    </Switch>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/dashboard" element={<Board />} />
+      <Route path="*" element={<h1>404 - Page not found</h1>} />
+    </Routes>
   );
 }

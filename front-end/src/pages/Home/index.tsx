@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation } from '@apollo/react-hooks';
-import { gql } from 'apollo-boost';
-import { History } from 'history';
+import { useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useNavigate } from 'react-router-dom';
 import { FaCheck } from 'react-icons/fa';
 import { Container, Button, Content, Input } from './styles';
-
-type Props = {
-  history: History;
-};
 
 export const CREATE_OR_LOGIN_USER = gql`
   mutation($email: String!) {
@@ -17,8 +13,9 @@ export const CREATE_OR_LOGIN_USER = gql`
   }
 `;
 
-const Home: React.FC<Props> = ({ history }) => {
+const Home: React.FC = () => {
   const [input, setInput] = useState<string>('');
+  const navigate = useNavigate();
 
   const [createOrLoginUser, { data }] = useMutation(CREATE_OR_LOGIN_USER);
 
@@ -27,9 +24,9 @@ const Home: React.FC<Props> = ({ history }) => {
       const { createOrLoginUser } = data;
       const { id } = createOrLoginUser;
 
-      history.push(`/dashboard?id=${id}`);
+      navigate(`/dashboard?id=${id}`);
     }
-  }, [data]);
+  }, [data, navigate]);
 
   async function handleRegister(e: React.MouseEvent) {
     e.preventDefault();

@@ -1,6 +1,6 @@
 import React from 'react';
-import { useQuery } from '@apollo/react-hooks';
-import { gql } from 'apollo-boost';
+import { useQuery } from '@apollo/client';
+import { gql } from '@apollo/client';
 import { Container, Message } from './styles';
 
 interface IMessage {

@@ -1,13 +1,17 @@
-import ApolloClient from 'apollo-boost';
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 
-export default new ApolloClient({
+const httpLink = createHttpLink({
   uri: 'http://localhost:3333/graphql',
-  // request: (operation) => {
-  //   operation.setContext(({ headers = {} }) => ({
-  //     headers: {
-  //       ...headers,
-  //       authorization: `Bearer ${bearerToken}`,
-  //     },
-  //   }));
+});
+
+const client = new ApolloClient({
+  link: httpLink,
+  cache: new InMemoryCache(),
+  // defaultOptions: {
+  //   watchQuery: {
+  //     fetchPolicy: 'cache-and-network',
+  //   },
   // },
 });
+
+export default client;

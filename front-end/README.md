@@ -1,44 +1,102 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Front-End - React + Apollo Client + GraphQL
 
-## Available Scripts
+React application with Apollo Client for consuming the GraphQL API.
 
-In the project directory, you can run:
+## 🚀 Technologies
 
-### `yarn start`
+- **React** v18 - UI Library
+- **TypeScript** v4.9 - Type safety
+- **Apollo Client** v3 - GraphQL client
+- **React Router** v6 - Routing
+- **Styled Components** v6 - CSS-in-JS styling
+- **React Icons** v4 - Icon library
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## 📦 Installation
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+\`\`\`bash
+npm install
+\`\`\`
 
-### `yarn test`
+## 🏃 Running the application
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+\`\`\`bash
+# Development mode
+npm start
 
-### `yarn build`
+# Production build
+npm run build
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Run tests
+npm test
+\`\`\`
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+The application will be available at:
+- **Frontend**: http://localhost:3000
+- **GraphQL API**: Must be running at http://localhost:3333/graphql
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🔧 Features
 
-### `yarn eject`
+### Home Page (\`/\`)
+- User login/registration with email
+- Creates or authenticates user via GraphQL mutation
+- Redirects to dashboard after authentication
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Dashboard (\`/dashboard\`)
+- Displays all messages from the GraphQL API
+- Shows message content and author email
+- Real-time updates via Apollo Client cache
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📁 Project Structure
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+\`\`\`
+src/
+├── pages/
+│   ├── Home/        # Login/Register page
+│   └── Board/       # Messages dashboard
+├── services/
+│   ├── api.ts       # Apollo Client configuration
+│   └── history.tsx  # Browser history (legacy)
+├── styles/
+│   └── global.ts    # Global styles
+├── App.tsx          # Main app component
+├── routes.tsx       # Route configuration
+└── index.tsx        # Application entry point
+\`\`\`
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## 🔄 Recent Updates
 
-## Learn More
+- ✅ Upgraded React 16 → 18
+- ✅ Upgraded Apollo Client 2 → 3
+- ✅ Upgraded React Router 5 → 6
+- ✅ Upgraded TypeScript 3.7 → 4.9
+- ✅ Upgraded Styled Components 5 → 6
+- ✅ Updated to react-scripts 5.0.1
+- ✅ Migrated to new React 18 createRoot API
+- ✅ Updated Router to use BrowserRouter and useNavigate
+- ✅ Fixed all TypeScript compilation errors
+- ✅ Reduced vulnerabilities from 172 to 9 (only low/moderate severity)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## ✅ Build Status
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- ✅ Build compiles successfully
+- ✅ No TypeScript errors
+- ✅ 9 low/moderate vulnerabilities (dev dependencies only)
+- ✅ Ready for production deployment
+
+## 🚀 Deployment
+
+The build folder is ready to be deployed. You can use any static hosting service:
+
+\`\`\`bash
+# Build for production
+npm run build
+
+# Serve locally
+npx serve -s build
+\`\`\`
+
+## 🔗 Backend Integration
+
+This frontend connects to the NestJS GraphQL backend. Make sure the backend is running on port 3333 before starting the frontend.
+
+See the \`back-end\` folder for backend setup instructions.

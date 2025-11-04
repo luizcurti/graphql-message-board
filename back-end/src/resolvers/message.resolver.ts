@@ -64,7 +64,7 @@ export default class MessageResolver {
 
     if (!message || message.userId !== input.userId) {
       throw new Error(
-        'Message does not exists or you are not the message author',
+        'Message does not exist or you are not the message author',
       );
     }
 
