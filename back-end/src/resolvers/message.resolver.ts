@@ -35,9 +35,9 @@ export default class MessageResolver {
     });
   }
 
-  @Query(() => Message, { nullable: true })
+    @Query(() => Message, { nullable: true })
   public async getMessage(@Args('id') id: number): Promise<Message> {
-    return this.repoService.messageRepo.findOne(id);
+    return this.repoService.messageRepo.findOne({ where: { id } });
   }
 
   @Mutation(() => Message)
@@ -60,12 +60,13 @@ export default class MessageResolver {
   public async deleteMessage(
     @Args('data') input: DeleteMessageInput,
   ): Promise<Message> {
-    const message = await this.repoService.messageRepo.findOne(input.id);
+    const message = await this.repoService.messageRepo.findOne({ where: { id: input.id } });
 
-    if (!message || message.userId !== input.userId)
+    if (!message || message.userId !== input.userId) {
       throw new Error(
         'Message does not exists or you are not the message author',
       );
+    }
 
     const copy = { ...message };
 

@@ -1,9 +1,50 @@
+# Dependencies
 /node_modules
+/front-end/node_modules
+/back-end/node_modules
+node_modules/
+
+# Build outputs
 /dist
+/front-end/dist
+/front-end/build
+/back-end/dist
+
+# Database
 /.docker/dbdata
+/back-end/data/*.db
+*.db
+*.sqlite
+
+# Coverage
 /coverage
+/back-end/coverage
+/front-end/coverage
+
+# Logs
 /logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Lock files
 package-lock.json
 yarn.lock
+
+# IDE
 .DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+.cache/

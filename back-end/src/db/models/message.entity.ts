@@ -5,7 +5,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Column,
-  OneToMany,
   JoinColumn,
   ManyToOne,
 } from 'typeorm';
@@ -37,11 +36,10 @@ export default class Message {
   @Field(() => User)
   user: User;
 
-  // Associations
+    // Associations
   @ManyToOne(
     () => User,
     user => user.messageConnection,
-    { primary: true },
   )
   @JoinColumn({ name: 'user_id' })
   userConnection: Promise<User>;
