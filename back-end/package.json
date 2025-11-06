@@ -4,7 +4,7 @@
     "name": ""
   },
   "version": "0.0.1",
-  "description": "",
+  "description": "GraphQL API built with NestJS, TypeORM and SQLite",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
