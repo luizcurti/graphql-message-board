@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import RepoService from './repo.service';
 
 describe('AppController', () => {
@@ -16,7 +15,6 @@ describe('AppController', () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
-        AppService,
         {
           provide: RepoService,
           useValue: mockRepoService,
@@ -29,7 +27,7 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return message count', async () => {
-      const result = await appController.getHello();
+      const result = await appController.getStats();
       expect(result).toBe('There are 0 existent messages');
     });
   });

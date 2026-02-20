@@ -4,21 +4,24 @@ NestJS + TypeORM + GraphQL + React
 
 <p align="center">Full-stack GraphQL application with NestJS backend and React frontend.</p>
 
+> **Status:** Production-ready — all mutations implemented, input validation, pagination, GraphQL error codes, and per-request DataLoader context.
+
 ## 🚀 Technologies
 
 ### Backend
-- **NestJS** v10 - Node.js framework
-- **GraphQL** v16 - Query language with Apollo Server
-- **TypeORM** v0.3 - TypeScript ORM
-- **SQLite** - Database
-- **DataLoader** - Query optimization (N+1 problem)
+- **NestJS** v10 — Node.js framework
+- **GraphQL** v16 — Code-first schema with Apollo Server
+- **TypeORM** v0.3 — TypeScript ORM (modern DataSource API)
+- **SQLite** — Lightweight relational database
+- **DataLoader** — Per-request batch loading (N+1 prevention)
+- **class-validator + class-transformer** — Input validation via `ValidationPipe`
 - **TypeScript** v5.3
 
 ### Frontend
-- **React** v18 - UI library
-- **Apollo Client** v3 - GraphQL client
-- **React Router** v6 - Routing
-- **Styled Components** v6 - CSS-in-JS
+- **React** v18 — UI library
+- **Apollo Client** v3 — GraphQL client with `InMemoryCache`
+- **React Router** v6 — Client-side routing
+- **Styled Components** v6 — CSS-in-JS
 - **TypeScript** v4.9
 
 ## 📦 Installation
@@ -56,14 +59,16 @@ The application will be available at:
 
 ## 🔧 Features
 
-- ✅ User authentication (create/login with email)
-- ✅ Message CRUD operations
-- ✅ GraphQL queries, mutations, and subscriptions
-- ✅ Real-time updates with GraphQL subscriptions
-- ✅ DataLoader for optimized database queries
-- ✅ Fully typed with TypeScript
-- ✅ Modern React with hooks
-- ✅ Responsive UI with Styled Components
+- ✅ User create/login by email
+- ✅ Full Message CRUD — `createMessage`, `updateMessage`, `deleteMessage` (owner-only)
+- ✅ Full User CRUD — `updateUser`, `deleteUser`
+- ✅ Paginated queries — `getUsers`, `getMessages`, `getMessagesFromUser` (page + limit)
+- ✅ GraphQL queries, mutations, and subscriptions (`messageAdded`)
+- ✅ DataLoader per request — zero N+1 queries
+- ✅ Global `ValidationPipe` with `class-validator` decorators on every InputType
+- ✅ Structured `GraphQLError` responses with `extensions.code` (NOT_FOUND, FORBIDDEN, BAD_USER_INPUT)
+- ✅ Playground enabled only when `NODE_ENV !== 'production'`
+- ✅ Fully typed with TypeScript end-to-end
 
 ## 📁 Project Structure
 
@@ -106,23 +111,36 @@ npm test
 
 ### Queries
 ```graphql
-# Get all users
+# Paginated users
 query {
-  getUsers {
-    id
-    email
-    createdAt
+  getUsers(page: 1, limit: 20) {
+    items { id email createdAt }
+    total
+    page
+    pages
   }
 }
 
-# Get all messages
+# Paginated messages
 query {
-  getMessages {
-    id
-    content
-    user {
-      email
+  getMessages(page: 1, limit: 20) {
+    items {
+      id
+      content
+      user { email }
     }
+    total
+    page
+    pages
+  }
+}
+
+# Messages by user (paginated)
+query {
+  getMessagesFromUser(userId: 1, page: 1, limit: 10) {
+    items { id content }
+    total
+    pages
   }
 }
 ```
@@ -137,11 +155,41 @@ mutation {
   }
 }
 
+# Update user
+mutation {
+  updateUser(data: { id: 1, email: "new@example.com" }) {
+    id
+    email
+  }
+}
+
+# Delete user
+mutation {
+  deleteUser(data: { id: 1 }) {
+    id
+  }
+}
+
 # Create message
 mutation {
   createMessage(data: { userId: 1, content: "Hello World!" }) {
     id
     content
+  }
+}
+
+# Update message (owner only)
+mutation {
+  updateMessage(data: { id: 1, userId: 1, content: "Updated content" }) {
+    id
+    content
+  }
+}
+
+# Delete message (owner only)
+mutation {
+  deleteMessage(data: { id: 1, userId: 1 }) {
+    id
   }
 }
 ```
@@ -153,42 +201,24 @@ subscription {
   messageAdded {
     id
     content
-    user {
-      email
-    }
+    user { email }
   }
 }
 ```
 
-## 🔄 Recent Updates
-
-### Backend
-- ✅ Upgraded to NestJS 10+
-- ✅ Upgraded TypeORM to v0.3
-- ✅ Upgraded GraphQL to v16
-- ✅ Upgraded TypeScript to v5.3
-- ✅ **Reduced vulnerabilities from 75 to 0**
-- ✅ Fixed all lint errors
-- ✅ Updated tests configuration
-- ✅ Improved README documentation
-
-### Frontend
-- ✅ Upgraded React 16 → 18
-- ✅ Upgraded Apollo Client 2 → 3
-- ✅ Upgraded React Router 5 → 6
-- ✅ Upgraded TypeScript 3.7 → 4.9
-- ✅ **Reduced vulnerabilities from 172 to 9**
-- ✅ Migrated to React 18 APIs
-- ✅ Updated all imports and hooks
-- ✅ Fixed build errors
-
 ## ✅ Project Status
 
-- ✅ **Backend**: 0 vulnerabilities
-- ✅ **Frontend**: 9 vulnerabilities (low/moderate, dev dependencies only)
-- ✅ All builds passing
-- ✅ TypeScript compilation without errors
-- ✅ Ready for production deployment
+| Area | Status |
+|---|---|
+| Backend build | ✅ Compiles without errors |
+| Frontend build | ✅ Compiles without errors |
+| Unit tests | ✅ Passing |
+| Security | ✅ 0 backend vulnerabilities / 9 frontend (low/moderate, dev only) |
+| Input validation | ✅ `ValidationPipe` + `class-validator` on all inputs |
+| Error handling | ✅ `GraphQLError` with `extensions.code` on all resolvers |
+| DataLoader | ✅ Per-request context (no shared state between requests) |
+| Pagination | ✅ All list queries paginated |
+| CRUD completeness | ✅ Full CRUD for User and Message |
 
 ## 📚 Documentation
 

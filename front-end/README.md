@@ -1,6 +1,6 @@
-# Front-End - React + Apollo Client + GraphQL
+# Front-End — React + Apollo Client + GraphQL
 
-React application with Apollo Client for consuming the GraphQL API.
+React 18 application consuming the NestJS GraphQL API.
 
 ## 🚀 Technologies
 
@@ -9,7 +9,7 @@ React application with Apollo Client for consuming the GraphQL API.
 - **Apollo Client** v3 - GraphQL client
 - **React Router** v6 - Routing
 - **Styled Components** v6 - CSS-in-JS styling
-- **React Icons** v4 - Icon library
+- **React Icons** v4 — Icon library
 
 ## 📦 Installation
 
@@ -42,46 +42,38 @@ The application will be available at:
 - Redirects to dashboard after authentication
 
 ### Dashboard (\`/dashboard\`)
-- Displays all messages from the GraphQL API
-- Shows message content and author email
-- Real-time updates via Apollo Client cache
+- Displays paginated messages from the GraphQL API
+- Create new messages via textarea form
+- Delete own messages (with confirmation dialog)
+- Highlights own messages visually
+- Pagination controls with Prev/Next and page indicator
+- Author email shown on each message
 
 ## 📁 Project Structure
 
 \`\`\`
 src/
 ├── pages/
-│   ├── Home/        # Login/Register page
-│   └── Board/       # Messages dashboard
+│   ├── Home/        # Login / register page
+│   └── Board/       # Message board with pagination
 ├── services/
-│   ├── api.ts       # Apollo Client configuration
-│   └── history.tsx  # Browser history (legacy)
+│   └── api.ts       # Apollo Client configuration
 ├── styles/
 │   └── global.ts    # Global styles
 ├── App.tsx          # Main app component
-├── routes.tsx       # Route configuration
-└── index.tsx        # Application entry point
+├── routes.tsx       # Route definitions
+└── index.tsx        # Entry point (React 18 createRoot)
 \`\`\`
-
-## 🔄 Recent Updates
-
-- ✅ Upgraded React 16 → 18
-- ✅ Upgraded Apollo Client 2 → 3
-- ✅ Upgraded React Router 5 → 6
-- ✅ Upgraded TypeScript 3.7 → 4.9
-- ✅ Upgraded Styled Components 5 → 6
-- ✅ Updated to react-scripts 5.0.1
-- ✅ Migrated to new React 18 createRoot API
-- ✅ Updated Router to use BrowserRouter and useNavigate
-- ✅ Fixed all TypeScript compilation errors
-- ✅ Reduced vulnerabilities from 172 to 9 (only low/moderate severity)
 
 ## ✅ Build Status
 
-- ✅ Build compiles successfully
-- ✅ No TypeScript errors
-- ✅ 9 low/moderate vulnerabilities (dev dependencies only)
-- ✅ Ready for production deployment
+| Item | Status |
+|---|---|
+| TypeScript | ✅ No errors |
+| Build | ✅ Compiles successfully |
+| Vulnerabilities | ✅ 9 low/moderate (dev dependencies only) |
+| Board page | ✅ Create, delete own messages, pagination |
+| Home page | ✅ Create/login user, redirect to dashboard |
 
 ## 🚀 Deployment
 
