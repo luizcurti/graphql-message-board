@@ -49,14 +49,6 @@ type PaginatedMessages {
   pages: Int!
 }
 
-type Stats {
-  """Total number of users"""
-  users: Int!
-
-  """Total number of messages"""
-  messages: Int!
-}
-
 type Query {
   getUsers(
     """Page number (1-based)"""
@@ -83,9 +75,6 @@ type Query {
     limit: Int! = 20
   ): PaginatedMessages!
   getMessage(id: Float!): Message
-
-  """Returns total count of users and messages"""
-  getStats: Stats!
 }
 
 type Mutation {

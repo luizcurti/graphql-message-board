@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import * as DataLoader from 'dataloader';
+import DataLoader from 'dataloader';
 import UserLoader from './UserLoader';
 import User from '../models/user.entity';
 

@@ -4,14 +4,14 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { DataSource } from 'typeorm';
 
-import { AppController } from './app.controller';
 import ormOptions from './config/orm';
 import RepoModule from './repo.module';
 import UserResolver from './resolvers/user.resolver';
 import MessageResolver from './resolvers/message.resolver';
+import StatsResolver from './resolvers/stats.resolver';
 import { createContext } from './db/loaders';
 
-const gqlImports = [UserResolver, MessageResolver];
+const gqlImports = [UserResolver, MessageResolver, StatsResolver];
 
 @Module({
   imports: [
@@ -29,6 +29,5 @@ const gqlImports = [UserResolver, MessageResolver];
       }),
     }),
   ],
-  controllers: [AppController],
 })
 export class AppModule {}

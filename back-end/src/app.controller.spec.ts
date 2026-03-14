@@ -1,34 +1,49 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './app.controller';
+import StatsResolver from './resolvers/stats.resolver';
 import RepoService from './repo.service';
 
-describe('AppController', () => {
-  let appController: AppController;
+describe('StatsResolver', () => {
+  let resolver: StatsResolver;
 
   const mockRepoService = {
+    userRepo: {
+      count: jest.fn(),
+    },
     messageRepo: {
-      count: jest.fn().mockResolvedValue(0),
+      count: jest.fn(),
     },
   };
 
   beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
+    jest.clearAllMocks();
+
+    const module: TestingModule = await Test.createTestingModule({
       providers: [
-        {
-          provide: RepoService,
-          useValue: mockRepoService,
-        },
+        StatsResolver,
+        { provide: RepoService, useValue: mockRepoService },
       ],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    resolver = module.get<StatsResolver>(StatsResolver);
   });
 
-  describe('root', () => {
-    it('should return message count', async () => {
-      const result = await appController.getStats();
-      expect(result).toBe('There are 0 existent messages');
+  describe('getStats', () => {
+    it('deve retornar contagem de usuários e mensagens', async () => {
+      mockRepoService.userRepo.count.mockResolvedValue(3);
+      mockRepoService.messageRepo.count.mockResolvedValue(7);
+
+      const result = await resolver.getStats();
+
+      expect(result).toEqual({ users: 3, messages: 7 });
+    });
+
+    it('deve retornar zeros quando não há dados', async () => {
+      mockRepoService.userRepo.count.mockResolvedValue(0);
+      mockRepoService.messageRepo.count.mockResolvedValue(0);
+
+      const result = await resolver.getStats();
+
+      expect(result).toEqual({ users: 0, messages: 0 });
     });
   });
 });
