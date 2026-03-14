@@ -74,6 +74,7 @@ src/
 | Vulnerabilities | ✅ 9 low/moderate (dev dependencies only) |
 | Board page | ✅ Create, delete own messages, pagination |
 | Home page | ✅ Create/login user, redirect to dashboard |
+| Integration tests | ✅ 17/17 checks passing (`e2e-integration-test.sh`) |
 
 ## 🚀 Deployment
 

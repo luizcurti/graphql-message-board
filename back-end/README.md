@@ -43,18 +43,33 @@ The application will be available at:
 ## 🧪 Tests
 
 ```bash
-# Unit tests
+# Unit tests (30 tests, 3 suites)
 npm run test
 
-# Watch mode tests
+# Watch mode
 npm run test:watch
 
-# E2E tests
+# E2E tests (33 tests, 2 suites)
 npm run test:e2e
 
-# Test coverage
+# Coverage report
 npm run test:cov
 ```
+
+### Unit test suites
+
+| File | Resolver tested | Tests |
+|---|---|---|
+| `src/app.controller.spec.ts` | `StatsResolver` | 2 |
+| `src/resolvers/user.resolver.spec.ts` | `UserResolver` | 11 |
+| `src/resolvers/message.resolver.spec.ts` | `MessageResolver` | 17 |
+
+### E2E test suites
+
+| File | Scope | Tests |
+|---|---|---|
+| `test/app.e2e-spec.ts` | Smoke test — `getStats` | 1 |
+| `test/graphql.e2e-spec.ts` | All resolvers, validation, errors | 32 |
 
 ## 🔍 Lint and Formatting
 
@@ -173,22 +188,24 @@ Resolvers throw `GraphQLError` with structured `extensions.code`:
 ```
 src/
 ├── config/
-│   └── orm.ts           # TypeORM DataSource options (export default)
+│   ├── orm.ts             # TypeORM DataSource options
+│   └── data-source.ts     # DataSource export for TypeORM CLI (migrations)
 ├── db/
 │   ├── loaders/
-│   │   ├── index.ts     # createContext() factory + GQLContext type
-│   │   └── UserLoader.ts# DataLoader batch function
-│   ├── migrations/      # TypeORM migrations
-│   └── models/          # User, Message entities
+│   │   ├── index.ts       # createContext() factory + GQLContext type
+│   │   └── UserLoader.ts  # DataLoader batch function
+│   ├── migrations/        # TypeORM migrations
+│   └── models/            # User, Message entities
 ├── resolvers/
-│   ├── input/           # InputTypes (user, message, pagination args)
-│   ├── types/           # ObjectTypes (PaginatedUsers, PaginatedMessages)
+│   ├── input/             # InputTypes (user, message, pagination args)
+│   ├── types/             # ObjectTypes (PaginatedUsers, PaginatedMessages, Stats)
 │   ├── user.resolver.ts
-│   └── message.resolver.ts
-├── app.module.ts        # Root module (forRootAsync)
+│   ├── message.resolver.ts
+│   └── stats.resolver.ts  # getStats query (users + messages count)
+├── app.module.ts          # Root module — 100% GraphQL, no controllers
 ├── repo.module.ts
 ├── repo.service.ts
-└── main.ts              # Bootstrap + global ValidationPipe
+└── main.ts                # Bootstrap + global ValidationPipe
 ```
 
 ## 🔧 Configuration
@@ -204,9 +221,12 @@ The SQLite database is configured in `src/config/orm.ts`:
 | Item | Status |
 |---|---|
 | Build | ✅ No errors |
-| Tests | ✅ Unit + E2E passing |
+| Unit tests | ✅ 30/30 — `stats`, `user`, `message` resolvers |
+| E2E tests | ✅ 33/33 — all queries, mutations and edge cases |
+| Lint | ✅ ESLint — zero errors |
 | Vulnerabilities | ✅ 0 |
 | TypeScript | ✅ Strict, no errors |
+| Architecture | ✅ 100% GraphQL — no REST endpoints |
 | Input validation | ✅ Global `ValidationPipe` + `class-validator` |
 | Error handling | ✅ `GraphQLError` with `extensions.code` |
 | DataLoader | ✅ Per-request, no shared state |

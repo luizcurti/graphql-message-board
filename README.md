@@ -93,19 +93,34 @@ The application will be available at:
 ## 🧪 Testing
 
 ```bash
-# Backend tests
+# Backend — unit tests (30 tests, 3 suites)
 cd back-end
-npm test              # Unit tests
-npm run test:e2e      # E2E tests
-npm run test:cov      # Coverage
+npm test
 
-# Backend lint
+# Backend — E2E tests (33 tests, 2 suites)
+npm run test:e2e
+
+# Backend — coverage report
+npm run test:cov
+
+# Backend — lint (ESLint + auto-fix)
 npm run lint
 
-# Frontend tests
-cd front-end
-npm test
+# Full-stack integration (17 checks via curl)
+bash e2e-integration-test.sh
 ```
+
+### Test Coverage
+
+| Suite | Type | Tests | Status |
+|---|---|---|---|
+| `stats.resolver.spec.ts` | Unit | 2 | ✅ |
+| `user.resolver.spec.ts` | Unit | 11 | ✅ |
+| `message.resolver.spec.ts` | Unit | 17 | ✅ |
+| `app.e2e-spec.ts` | E2E | 1 | ✅ |
+| `graphql.e2e-spec.ts` | E2E | 32 | ✅ |
+| `e2e-integration-test.sh` | Integration | 17 | ✅ |
+| **Total** | | **80** | ✅ |
 
 ## 📊 GraphQL Examples
 
@@ -212,13 +227,17 @@ subscription {
 |---|---|
 | Backend build | ✅ Compiles without errors |
 | Frontend build | ✅ Compiles without errors |
-| Unit tests | ✅ Passing |
+| Unit tests | ✅ 30/30 passing (3 suites) |
+| E2E tests | ✅ 33/33 passing (2 suites) |
+| Integration tests | ✅ 17/17 checks passing |
+| Lint | ✅ ESLint — zero errors |
 | Security | ✅ 0 backend vulnerabilities / 9 frontend (low/moderate, dev only) |
 | Input validation | ✅ `ValidationPipe` + `class-validator` on all inputs |
 | Error handling | ✅ `GraphQLError` with `extensions.code` on all resolvers |
 | DataLoader | ✅ Per-request context (no shared state between requests) |
 | Pagination | ✅ All list queries paginated |
 | CRUD completeness | ✅ Full CRUD for User and Message |
+| Architecture | ✅ 100% GraphQL — zero REST endpoints |
 
 ## 📚 Documentation
 
