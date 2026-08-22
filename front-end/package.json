@@ -4,6 +4,7 @@
     "name": ""
   },
   "version": "0.1.0",
+  "description": "GraphQL Message Board — frontend built with React and Apollo Client",
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.11.0",

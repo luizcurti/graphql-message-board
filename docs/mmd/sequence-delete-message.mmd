@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor User
+    participant Board as Board page (useMessages)
+    participant API as GraphQL API
+    participant Svc as MessageService
+    participant DB as SQLite
+
+    User->>Board: click delete + confirm
+    Board->>API: mutation deleteMessage(id, userId)
+    API->>Svc: remove(id, userId)
+    Svc->>DB: SELECT message WHERE id = ?
+
+    rect rgb(235, 245, 235)
+        note over Svc,DB: Happy path — caller is the author
+        DB-->>Svc: message (userId matches)
+        Svc->>DB: DELETE FROM messages WHERE id = ?
+        Svc-->>API: deleted message
+        API-->>Board: { id }
+        Board->>API: refetch getMessages(page)
+    end
+
+    rect rgb(250, 235, 235)
+        note over Svc,API: Sad path — caller is not the author
+        DB-->>Svc: message (userId differs)
+        Svc-->>API: GraphQLError (FORBIDDEN)
+        API-->>Board: errors: [...]
+        Board->>User: alert(error.message)
+    end

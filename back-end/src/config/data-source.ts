@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm';
 
 export default new DataSource({
   type: 'sqlite',
-  database: 'data/rocketseat.db',
+  database: 'data/chatterbox.db',
   logging: true,
   entities: [path.resolve(__dirname, '..', 'db', 'models', '*')],
   migrations: [path.resolve(__dirname, '..', 'db', 'migrations', '*')],

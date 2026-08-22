@@ -1,0 +1,23 @@
+flowchart TB
+    Dev["Developer / Browser<br/>localhost"]
+
+    subgraph Compose["docker compose up --build"]
+        direction LR
+
+        subgraph FE["frontend container"]
+            Serve["serve -s build<br/>:3000"]
+        end
+
+        subgraph BE["backend container"]
+            Nest["node dist/main<br/>:3333"]
+            Vol[("volume: backend-data<br/>/app/data")]
+            Nest --- Vol
+        end
+    end
+
+    Dev -- "http://localhost:3000" --> Serve
+    Dev -- "http://localhost:3333/graphql" --> Nest
+    Serve -. "GraphQL requests<br/>(from the browser, not container-to-container)" .-> Nest
+
+    BE -. "healthcheck: POST /graphql<br/>{ __typename }" .-> BE
+    FE -. "depends_on: backend<br/>condition: service_healthy" .-> BE

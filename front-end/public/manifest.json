@@ -1,6 +1,6 @@
 {
-  "short_name": "GraphQL App",
-  "name": "NestJS GraphQL with React",
+  "short_name": "Message Board",
+  "name": "GraphQL Message Board",
   "icons": [
     {
       "src": "favicon.ico",

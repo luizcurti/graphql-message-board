@@ -1,0 +1,37 @@
+sequenceDiagram
+    actor User
+    participant Home as Home page (useAuth)
+    participant API as GraphQL API
+    participant Val as ValidationPipe
+    participant Svc as UserService
+    participant DB as SQLite
+
+    User->>Home: submit e-mail
+    Home->>API: mutation createOrLoginUser(email)
+
+    rect rgb(235, 245, 235)
+        note over API,DB: Happy path — valid, existing or new e-mail
+        API->>Val: validate UserInput (@IsEmail, @IsNotEmpty)
+        Val-->>API: valid
+        API->>Svc: createOrLogin(email)
+        Svc->>DB: SELECT user WHERE email = ?
+        alt user exists
+            DB-->>Svc: user row
+        else user does not exist
+            DB-->>Svc: none
+            Svc->>DB: INSERT INTO users
+            DB-->>Svc: new user row
+        end
+        Svc-->>API: User
+        API-->>Home: { id, email }
+        Home->>User: navigate to /dashboard?id=...
+    end
+
+    rect rgb(250, 235, 235)
+        note over API,Val: Sad path — malformed e-mail
+        Home->>API: mutation createOrLoginUser("not-an-email")
+        API->>Val: validate UserInput
+        Val-->>API: BAD_USER_INPUT (Invalid email format)
+        API-->>Home: GraphQLError
+        Home->>User: alert(error.message)
+    end

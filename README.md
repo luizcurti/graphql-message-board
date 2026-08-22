@@ -1,61 +1,71 @@
 <h1 align="center">
-NestJS + TypeORM + GraphQL + React
+GraphQL Message Board
 </h1>
 
-<p align="center">Full-stack GraphQL application with NestJS backend and React frontend.</p>
-
-> **Status:** Production-ready — all mutations implemented, input validation, pagination, GraphQL error codes, and per-request DataLoader context.
+<p align="center">Full-stack GraphQL message board — NestJS backend, React frontend, running together as one system.</p>
 
 ## 🚀 Technologies
 
 ### Backend
 - **NestJS** v10 — Node.js framework
 - **GraphQL** v16 — Code-first schema with Apollo Server
-- **TypeORM** v0.3 — TypeScript ORM (modern DataSource API)
-- **SQLite** — Lightweight relational database
+- **TypeORM** v0.3 — TypeScript ORM (modern `DataSource` API)
+- **SQLite** — Lightweight relational database, migrations run automatically on boot
 - **DataLoader** — Per-request batch loading (N+1 prevention)
 - **class-validator + class-transformer** — Input validation via `ValidationPipe`
-- **TypeScript** v5.3
+- **TypeScript** v5, strict mode
 
 ### Frontend
 - **React** v18 — UI library
 - **Apollo Client** v3 — GraphQL client with `InMemoryCache`
 - **React Router** v6 — Client-side routing
 - **Styled Components** v6 — CSS-in-JS
-- **TypeScript** v4.9
+- **TypeScript** v4.9, strict mode
 
 ## 📦 Installation
 
 ```bash
-# Clone this repository
 git clone https://github.com/luizcurti/nestjs-graphql.git
 cd nestjs-graphql
 
-# Install backend dependencies
-cd back-end
-npm install
-
-# Install frontend dependencies
-cd ../front-end
-npm install
+cd back-end && npm install
+cd ../front-end && npm install
 ```
 
 ## 🏃 Running the application
 
+### Locally (two terminals)
+
 ```bash
-# Terminal 1 - Start backend (development mode)
+# Terminal 1 — backend
 cd back-end
 npm run start:dev
 
-# Terminal 2 - Start frontend
+# Terminal 2 — frontend
 cd front-end
 npm start
 ```
 
-The application will be available at:
+### With Docker Compose (recommended way to verify the full system)
+
+```bash
+docker compose up --build
+```
+
+This builds and starts both containers as one system:
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3333
-- **GraphQL Playground**: http://localhost:3333/graphql
+- **GraphQL Playground**: http://localhost:3333/graphql (disabled when `NODE_ENV=production`)
+
+The backend has a Docker healthcheck (`POST /graphql { __typename }`); the frontend container waits for it via `depends_on: condition: service_healthy`. Database migrations run automatically on boot, so a fresh `docker compose up` produces a fully working, empty database — no manual migration step needed. SQLite data persists in the `backend-data` named volume across restarts.
+
+## 🏗️ Architecture
+
+The backend follows a thin **Resolver → Service → Repository** layering: GraphQL resolvers only marshal arguments and delegate to `UserService` / `MessageService`, which own all business rules (email normalization, ownership checks, pagination) and talk to TypeORM repositories. This keeps each layer testable in isolation without introducing DDD/CQRS ceremony the app doesn't need. The frontend mirrors this with hooks (`useAuth`, `useMessages`) that own GraphQL calls and validation, leaving `Home`/`Board` as presentational components.
+
+![Architecture](docs/img/architecture.png)
+
+![Entity-relationship diagram](docs/img/er-diagram.png)
 
 ## 🔧 Features
 
@@ -67,66 +77,113 @@ The application will be available at:
 - ✅ DataLoader per request — zero N+1 queries
 - ✅ Global `ValidationPipe` with `class-validator` decorators on every InputType
 - ✅ Structured `GraphQLError` responses with `extensions.code` (NOT_FOUND, FORBIDDEN, BAD_USER_INPUT)
+- ✅ CORS enabled — the SPA (port 3000) can actually call the API (port 3333) from a real browser
+- ✅ `messages.user_id → users.id` foreign key with `ON DELETE CASCADE`, enforced at the database level
 - ✅ Playground enabled only when `NODE_ENV !== 'production'`
-- ✅ Fully typed with TypeScript end-to-end
+- ✅ Fully typed with TypeScript end-to-end, strict mode on both sides
 
 ## 📁 Project Structure
 
 ```
 .
-├── back-end/          # NestJS GraphQL API
+├── back-end/               # NestJS GraphQL API
 │   ├── src/
-│   │   ├── config/    # Database configuration
-│   │   ├── db/        # Entities, migrations, loaders
-│   │   ├── resolvers/ # GraphQL resolvers
-│   │   └── ...
-│   └── data/          # SQLite database
+│   │   ├── config/         # TypeORM DataSource options + CLI datasource
+│   │   ├── db/              # Entities, migrations, DataLoader
+│   │   ├── services/        # UserService, MessageService — business logic
+│   │   ├── resolvers/       # Thin GraphQL resolvers (input/types subfolders)
+│   │   ├── common/          # paginate() helper
+│   │   └── pubsub.ts         # shared PubSub instance (messageAdded)
+│   ├── test/                # E2E tests (graphql.e2e-spec.ts)
+│   ├── Dockerfile
+│   └── data/                 # SQLite database (gitignored)
 │
-└── front-end/         # React application
-    ├── src/
-    │   ├── pages/     # Home, Dashboard
-    │   ├── services/  # Apollo Client setup
-    │   └── ...
-    └── public/
+├── front-end/               # React application
+│   ├── src/
+│   │   ├── pages/            # Home, Board — presentational only
+│   │   ├── hooks/            # useAuth, useMessages — GraphQL + logic
+│   │   ├── graphql/           # gql documents + TS types
+│   │   └── services/          # Apollo Client setup
+│   └── Dockerfile
+│
+├── docs/
+│   ├── mmd/                   # Mermaid diagram sources
+│   ├── img/                   # Rendered diagrams (PNG)
+│   └── postman/                # API collection (happy + sad paths)
+│
+├── e2e/                       # Playwright — real browser vs. real stack
+│   └── tests/
+│
+├── docker-compose.yml
+└── e2e-integration-test.sh     # Full-stack integration checks (curl)
 ```
 
 ## 🧪 Testing
 
-```bash
-# Backend — unit tests (30 tests, 3 suites)
-cd back-end
-npm test
+The system is covered at five levels — unit, E2E, full-stack integration, an API collection, and real-browser E2E — each exercising both the happy and sad paths.
 
-# Backend — E2E tests (33 tests, 2 suites)
-npm run test:e2e
+```bash
+# Backend — unit tests (41 tests, 5 suites)
+cd back-end && npm test
+
+# Backend — E2E tests (34 tests, 1 suite)
+cd back-end && npm run test:e2e
 
 # Backend — coverage report
-npm run test:cov
+cd back-end && npm run test:cov
 
-# Backend — lint (ESLint + auto-fix)
-npm run lint
+# Frontend — unit tests (16 tests, 4 suites)
+cd front-end && npm test -- --watchAll=false
 
-# Full-stack integration (17 checks via curl)
+# Postman collection (27 requests / 78 assertions) — needs the backend running
+cd back-end && npm run test:collection
+
+# Full-stack integration (19 checks via curl) — needs both apps running
 bash e2e-integration-test.sh
+
+# Browser E2E (real Chromium vs. the real running stack) — needs docker compose up
+cd e2e && npm install && npx playwright install --with-deps chromium && npm test
 ```
 
-### Test Coverage
+### Test coverage
 
-| Suite | Type | Tests | Status |
-|---|---|---|---|
-| `stats.resolver.spec.ts` | Unit | 2 | ✅ |
-| `user.resolver.spec.ts` | Unit | 11 | ✅ |
-| `message.resolver.spec.ts` | Unit | 17 | ✅ |
-| `app.e2e-spec.ts` | E2E | 1 | ✅ |
-| `graphql.e2e-spec.ts` | E2E | 32 | ✅ |
-| `e2e-integration-test.sh` | Integration | 17 | ✅ |
-| **Total** | | **80** | ✅ |
+| Suite | Type | Scope |
+|---|---|---|
+| `back-end/src/services/*.spec.ts` | Unit | `UserService`, `MessageService` business rules |
+| `back-end/src/resolvers/*.spec.ts` | Unit | Resolver → service delegation |
+| `back-end/test/graphql.e2e-spec.ts` | E2E | Every query/mutation, validation, ownership, malformed requests |
+| `front-end/src/hooks/*.test.tsx` | Unit | `useAuth`, `useMessages` against a mocked Apollo Client |
+| `front-end/src/pages/*/index.test.tsx` | Unit | `Home`, `Board` rendering + interaction |
+| `docs/postman/*.postman_collection.json` | Collection | Every query/mutation, one happy + one sad request each |
+| `e2e-integration-test.sh` | Integration | Front + back running together (routes, GraphQL, DataLoader, pagination, ownership) |
+| `e2e/tests/full-stack.spec.ts` | Browser E2E | Real browser: type into the actual form, submit, confirm the backend stored it, confirm it renders back |
+
+> **Why a separate browser layer?** Everything above either talks to the API directly (curl, supertest) or renders components against a *mocked* Apollo Client — none of them go through a real browser's network stack. The Playwright suite is what actually caught that the backend had no CORS policy: the real browser was silently blocking every request from the SPA to the API with `Failed to fetch`, invisible to every other test layer. It also caught a broken migration (see below). See [`e2e/README.md`](e2e/README.md).
+
+**Bugs this pass found and fixed** (each only surfaced once the system was tested as a whole, not before): fresh databases had no tables (migrations were never run automatically, and the `typeorm` CLI script was broken for TypeORM 0.3); `getMessagesFromUser` threw under the real `ValidationPipe` config due to how NestJS merges multiple `@Args()` decorators; the backend had no CORS policy, so the real front-end couldn't reach it from a browser at all; and the `messages → users` foreign key was declared in a migration but never actually created, so deleting a user silently orphaned their messages instead of cascading.
+
+## 📊 Documentation & diagrams
+
+Mermaid sources live in [`docs/mmd/`](docs/mmd), rendered to PNG in [`docs/img/`](docs/img):
+
+| Diagram | Purpose |
+|---|---|
+| [architecture.mmd](docs/mmd/architecture.mmd) | System components: SPA → Apollo Client → GraphQL API → services → DB |
+| [er-diagram.mmd](docs/mmd/er-diagram.mmd) | `User` 1—N `Message` |
+| [sequence-create-or-login-user.mmd](docs/mmd/sequence-create-or-login-user.mmd) | Login/register — happy + sad path |
+| [sequence-create-message.mmd](docs/mmd/sequence-create-message.mmd) | Create message, DataLoader resolution, subscription publish |
+| [sequence-delete-message.mmd](docs/mmd/sequence-delete-message.mmd) | Delete message — owner vs. forbidden |
+| [docker-compose.mmd](docs/mmd/docker-compose.mmd) | Container/network/port layout |
+| [ci-pipeline.mmd](docs/mmd/ci-pipeline.mmd) | GitHub Actions job graph |
+
+## 🔄 CI
+
+`.github/workflows/ci.yml` runs on every push/PR to `main` with four independent jobs: `back-end` (lint, build, unit, e2e), `front-end` (unit, build), `collection` (boots the API, runs the Postman collection via `newman`), and `integration` (`docker compose up`, runs `e2e-integration-test.sh` against the real containers, then the Playwright browser suite against the same running stack, tears down). See [ci-pipeline.mmd](docs/mmd/ci-pipeline.mmd).
 
 ## 📊 GraphQL Examples
 
 ### Queries
 ```graphql
-# Paginated users
 query {
   getUsers(page: 1, limit: 20) {
     items { id email createdAt }
@@ -136,21 +193,15 @@ query {
   }
 }
 
-# Paginated messages
 query {
   getMessages(page: 1, limit: 20) {
-    items {
-      id
-      content
-      user { email }
-    }
+    items { id content user { email } }
     total
     page
     pages
   }
 }
 
-# Messages by user (paginated)
 query {
   getMessagesFromUser(userId: 1, page: 1, limit: 10) {
     items { id content }
@@ -162,101 +213,40 @@ query {
 
 ### Mutations
 ```graphql
-# Create or login user
-mutation {
-  createOrLoginUser(data: { email: "user@example.com" }) {
-    id
-    email
-  }
-}
-
-# Update user
-mutation {
-  updateUser(data: { id: 1, email: "new@example.com" }) {
-    id
-    email
-  }
-}
-
-# Delete user
-mutation {
-  deleteUser(data: { id: 1 }) {
-    id
-  }
-}
-
-# Create message
-mutation {
-  createMessage(data: { userId: 1, content: "Hello World!" }) {
-    id
-    content
-  }
-}
-
-# Update message (owner only)
-mutation {
-  updateMessage(data: { id: 1, userId: 1, content: "Updated content" }) {
-    id
-    content
-  }
-}
-
-# Delete message (owner only)
-mutation {
-  deleteMessage(data: { id: 1, userId: 1 }) {
-    id
-  }
-}
+mutation { createOrLoginUser(data: { email: "user@example.com" }) { id email } }
+mutation { updateUser(data: { id: 1, email: "new@example.com" }) { id email } }
+mutation { deleteUser(data: { id: 1 }) { id } }
+mutation { createMessage(data: { userId: 1, content: "Hello World!" }) { id content } }
+mutation { updateMessage(data: { id: 1, userId: 1, content: "Updated content" }) { id content } }
+mutation { deleteMessage(data: { id: 1, userId: 1 }) { id } }
 ```
 
 ### Subscriptions
 ```graphql
-# Listen for new messages
 subscription {
-  messageAdded {
-    id
-    content
-    user { email }
-  }
+  messageAdded { id content user { email } }
 }
 ```
 
-## ✅ Project Status
+## 🛡️ Security notes
 
-| Area | Status |
-|---|---|
-| Backend build | ✅ Compiles without errors |
-| Frontend build | ✅ Compiles without errors |
-| Unit tests | ✅ 30/30 passing (3 suites) |
-| E2E tests | ✅ 33/33 passing (2 suites) |
-| Integration tests | ✅ 17/17 checks passing |
-| Lint | ✅ ESLint — zero errors |
-| Security | ✅ 0 backend vulnerabilities / 9 frontend (low/moderate, dev only) |
-| Input validation | ✅ `ValidationPipe` + `class-validator` on all inputs |
-| Error handling | ✅ `GraphQLError` with `extensions.code` on all resolvers |
-| DataLoader | ✅ Per-request context (no shared state between requests) |
-| Pagination | ✅ All list queries paginated |
-| CRUD completeness | ✅ Full CRUD for User and Message |
-| Architecture | ✅ 100% GraphQL — zero REST endpoints |
+`npm audit` on both apps shows only dev-tooling vulnerabilities — transitive dependencies of `react-scripts` (front-end build tooling), `node-gyp`/`tar` (native module compilation for `sqlite3`), and `newman`/`handlebars` (CI-only collection runner) — none of them ship in the running application. Package versions were kept within their current major (no breaking upgrades); the one runtime-reachable advisory (a `react-router` open-redirect fix requiring a v7 major bump) was deliberately deferred for the same reason and noted here for visibility.
 
 ## 📚 Documentation
 
-For detailed documentation, see:
 - [Backend README](./back-end/README.md)
 - [Frontend README](./front-end/README.md)
+- [Browser E2E README](./e2e/README.md)
 
 ## 🚀 Deployment
 
-### Backend
 ```bash
-cd back-end
-npm run build
-npm run start:prod
-```
+# Backend
+cd back-end && npm run build && npm run start:prod
 
-### Frontend
-```bash
-cd front-end
-npm run build
-# Deploy the 'build' folder to any static hosting service
+# Frontend
+cd front-end && npm run build   # deploy the 'build' folder to any static host
+
+# Or the whole system at once
+docker compose up --build -d
 ```

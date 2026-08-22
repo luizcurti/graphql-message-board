@@ -1,42 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useMutation } from '@apollo/client';
-import { gql } from '@apollo/client';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { FaCheck } from 'react-icons/fa';
+import { useAuth } from '../../hooks/useAuth';
 import { Container, Button, Content, Input } from './styles';
-
-export const CREATE_OR_LOGIN_USER = gql`
-  mutation($email: String!) {
-    createOrLoginUser(data: { email: $email }) {
-      id
-    }
-  }
-`;
 
 const Home: React.FC = () => {
   const [input, setInput] = useState<string>('');
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const [createOrLoginUser, { data }] = useMutation(CREATE_OR_LOGIN_USER);
-
-  useEffect(() => {
-    if (data) {
-      const { createOrLoginUser } = data;
-      const { id } = createOrLoginUser;
-
-      navigate(`/dashboard?id=${id}`);
-    }
-  }, [data, navigate]);
-
-  async function handleRegister(e: React.MouseEvent) {
+  function handleRegister(e: React.MouseEvent) {
     e.preventDefault();
-
-    if (input.length < 1) {
-      alert('Insert a valid e-mail!');
-      return;
-    }
-
-    createOrLoginUser({ variables: { email: input } });
+    login(input);
     setInput('');
   }
 
@@ -46,7 +19,7 @@ const Home: React.FC = () => {
         <form>
           <Input
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
             placeholder="E-mail"
           />
 

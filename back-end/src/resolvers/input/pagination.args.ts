@@ -1,5 +1,5 @@
 import { ArgsType, Field, Int } from '@nestjs/graphql';
-import { IsInt, Min, Max } from 'class-validator';
+import { IsInt, IsPositive, Min, Max } from 'class-validator';
 
 @ArgsType()
 export class PaginationArgs {
@@ -16,4 +16,11 @@ export class PaginationArgs {
   @Min(1)
   @Max(100)
   limit: number = 20;
+}
+
+@ArgsType()
+export class GetMessagesFromUserArgs extends PaginationArgs {
+  @Field()
+  @IsPositive({ message: 'User ID must be a positive number' })
+  userId: number;
 }

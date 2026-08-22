@@ -74,13 +74,12 @@ type Query {
     limit: Int! = 20
   ): PaginatedMessages!
   getMessagesFromUser(
-    userId: Float!
-
     """Page number (1-based)"""
     page: Int! = 1
 
     """Number of items per page (max 100)"""
     limit: Int! = 20
+    userId: Float!
   ): PaginatedMessages!
   getMessage(id: Float!): Message
 

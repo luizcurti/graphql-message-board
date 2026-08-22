@@ -1,0 +1,33 @@
+flowchart LR
+    subgraph Browser["Browser"]
+        UI["React SPA<br/>(Home, Board)"]
+        Hooks["Hooks<br/>(useAuth, useMessages)"]
+        Apollo["Apollo Client<br/>(InMemoryCache)"]
+        UI --> Hooks --> Apollo
+    end
+
+    subgraph Server["NestJS Backend (Docker: backend)"]
+        GQL["GraphQL Module<br/>(Apollo Server, /graphql)"]
+        VP["ValidationPipe<br/>(class-validator)"]
+        Resolvers["Resolvers<br/>(User, Message, Stats)"]
+        Services["Services<br/>(UserService, MessageService)"]
+        Loader["UserLoader<br/>(DataLoader, per-request)"]
+        PubSub["PubSub<br/>(messageAdded)"]
+
+        GQL --> VP --> Resolvers
+        Resolvers --> Services
+        Resolvers -. "resolves Message.user" .-> Loader
+        Services -. "publishes on create" .-> PubSub
+        PubSub -. "messageAdded" .-> GQL
+    end
+
+    subgraph DB["TypeORM + SQLite"]
+        Repo["Repositories<br/>(User, Message)"]
+        SQLite[("rocketseat.db")]
+        Repo --> SQLite
+    end
+
+    Apollo -- "HTTPS POST /graphql<br/>(queries, mutations)" --> GQL
+    Apollo -. "subscription<br/>messageAdded" .-> GQL
+    Services --> Repo
+    Loader --> Repo

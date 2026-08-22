@@ -1,0 +1,1301 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c8d",
+    "name": "GraphQL Message Board API",
+    "description": "GraphQL API collection for the GraphQL Message Board back-end (NestJS + TypeORM). Each query/mutation has one happy-path and one sad-path request. Run the whole collection top to bottom (folders in order) against a running backend — later requests depend on ids captured by earlier ones via environment variables (userId, messageId).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Stats",
+      "item": [
+        {
+          "name": "Get stats (happy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('users and messages are numbers', () => {",
+                  "  pm.expect(json.data.getStats.users).to.be.a('number');",
+                  "  pm.expect(json.data.getStats.messages).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"{ getStats { users messages } }\",\n  \"variables\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: returns the total user and message counts."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create or login user (happy — new user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns the created user', () => {",
+                  "  pm.expect(json.data.createOrLoginUser.email).to.eql('collection-user@example.com');",
+                  "  pm.environment.set('userId', json.data.createOrLoginUser.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateOrLoginUser($email: String!) { createOrLoginUser(data: { email: $email }) { id email } }\",\n  \"variables\": {\n    \"email\": \"collection-user@example.com\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: creates a new user on first login."
+          },
+          "response": []
+        },
+        {
+          "name": "Create or login user (happy — existing user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns the same user id', () => {",
+                  "  pm.expect(json.data.createOrLoginUser.id).to.eql(pm.environment.get('userId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateOrLoginUser($email: String!) { createOrLoginUser(data: { email: $email }) { id email } }\",\n  \"variables\": {\n    \"email\": \"collection-user@example.com\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: logging in again with the same email returns the same user, not a duplicate."
+          },
+          "response": []
+        },
+        {
+          "name": "Create or login user (sad — invalid email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has GraphQL errors', () => pm.expect(json.errors).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateOrLoginUser($email: String!) { createOrLoginUser(data: { email: $email }) { id email } }\",\n  \"variables\": {\n    \"email\": \"not-an-email\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: class-validator rejects a malformed email before it reaches the resolver."
+          },
+          "response": []
+        },
+        {
+          "name": "Get users (happy — paginated list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns a paginated list', () => {",
+                  "  pm.expect(json.data.getUsers.total).to.be.at.least(1);",
+                  "  pm.expect(json.data.getUsers.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query { getUsers(page: 1, limit: 10) { total page pages items { id email } } }\",\n  \"variables\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: lists users with pagination metadata."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by id (happy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns the user', () => {",
+                  "  pm.expect(String(json.data.getUser.id)).to.eql(String(pm.environment.get('userId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetUser($id: Float!) { getUser(id: $id) { id email } }\",\n  \"variables\": {\n    \"id\": {{userId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: fetches a single user by id."
+          },
+          "response": []
+        },
+        {
+          "name": "Create a second user (setup — for the \"email already in use\" case below)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('second user was created', () => {",
+                  "  pm.expect(json.data.createOrLoginUser.email).to.eql('collection-user-2@example.com');",
+                  "  pm.environment.set('secondUserId', json.data.createOrLoginUser.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation { createOrLoginUser(data: { email: \\\"collection-user-2@example.com\\\" }) { id email } }\",\n  \"variables\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Setup: a second account whose email the primary test user will try (and fail) to claim."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by id (sad — not found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns null', () => pm.expect(json.data.getUser).to.be.null);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query { getUser(id: 999999) { id email } }\",\n  \"variables\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: a nonexistent id resolves to null, not an error (field is nullable)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update user (happy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('email was updated', () => pm.expect(json.data.updateUser.email).to.eql('collection-user-updated@example.com'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation UpdateUser($id: Float!, $email: String!) { updateUser(data: { id: $id, email: $email }) { id email } }\",\n  \"variables\": {\n    \"id\": {{userId}},\n    \"email\": \"collection-user-updated@example.com\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: updates the user email."
+          },
+          "response": []
+        },
+        {
+          "name": "Update user (sad — not found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has GraphQL errors', () => pm.expect(json.errors).to.be.an('array').that.is.not.empty);",
+                  "pm.test('error code is NOT_FOUND', () => pm.expect(json.errors[0].extensions.code).to.eql('NOT_FOUND'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation { updateUser(data: { id: 999999, email: \\\"x@example.com\\\" }) { id } }\",\n  \"variables\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: updating a nonexistent user throws NOT_FOUND."
+          },
+          "response": []
+        },
+        {
+          "name": "Update user (sad — email already in use)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has GraphQL errors', () => pm.expect(json.errors).to.be.an('array').that.is.not.empty);",
+                  "pm.test('error code is BAD_USER_INPUT', () => pm.expect(json.errors[0].extensions.code).to.eql('BAD_USER_INPUT'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation UpdateUser($id: Float!) { updateUser(data: { id: $id, email: \\\"collection-user-2@example.com\\\" }) { id } }\",\n  \"variables\": {\n    \"id\": {{userId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: cannot update to an email already owned by the second (setup) user."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Create message (happy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('message was created', () => {",
+                  "  pm.expect(json.data.createMessage.content).to.eql('Hello from the collection!');",
+                  "  pm.environment.set('messageId', json.data.createMessage.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateMessage($userId: Float!, $content: String!) { createMessage(data: { userId: $userId, content: $content }) { id content userId user { email } } }\",\n  \"variables\": {\n    \"userId\": {{userId}},\n    \"content\": \"Hello from the collection!\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: creates a message and resolves the author via DataLoader."
+          },
+          "response": []
+        },
+        {
+          "name": "Create message (sad — empty content)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has GraphQL errors', () => pm.expect(json.errors).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateMessage($userId: Float!) { createMessage(data: { userId: $userId, content: \\\"\\\" }) { id } }\",\n  \"variables\": {\n    \"userId\": {{userId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: class-validator rejects empty content."
+          },
+          "response": []
+        },
+        {
+          "name": "Get messages (happy — paginated list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns a paginated list', () => {",
+                  "  pm.expect(json.data.getMessages.total).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query { getMessages(page: 1, limit: 10) { total page pages items { id content userId } } }\",\n  \"variables\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: lists messages with pagination metadata."
+          },
+          "response": []
+        },
+        {
+          "name": "Get messages from user (happy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('all items belong to the user', () => {",
+                  "  const uid = String(pm.environment.get('userId'));",
+                  "  json.data.getMessagesFromUser.items.forEach((m) => pm.expect(String(m.userId)).to.eql(uid));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetMessagesFromUser($userId: Float!) { getMessagesFromUser(userId: $userId, page: 1, limit: 10) { total items { id userId } } }\",\n  \"variables\": {\n    \"userId\": {{userId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: filters messages by author."
+          },
+          "response": []
+        },
+        {
+          "name": "Get messages from user (sad — no messages for user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns an empty list', () => pm.expect(json.data.getMessagesFromUser.total).to.eql(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query { getMessagesFromUser(userId: 999999, page: 1, limit: 10) { total items { id } } }\",\n  \"variables\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: a userId with no messages returns an empty (not erroring) paginated result."
+          },
+          "response": []
+        },
+        {
+          "name": "Get message by id (happy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns the message', () => {",
+                  "  pm.expect(String(json.data.getMessage.id)).to.eql(String(pm.environment.get('messageId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetMessage($id: Float!) { getMessage(id: $id) { id content } }\",\n  \"variables\": {\n    \"id\": {{messageId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: fetches a single message by id."
+          },
+          "response": []
+        },
+        {
+          "name": "Get message by id (sad — not found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns null', () => pm.expect(json.data.getMessage).to.be.null);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query { getMessage(id: 999999) { id } }\",\n  \"variables\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: a nonexistent id resolves to null, not an error."
+          },
+          "response": []
+        },
+        {
+          "name": "Update message (happy — owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('content was updated', () => pm.expect(json.data.updateMessage.content).to.eql('Updated via collection'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation UpdateMessage($id: Float!, $userId: Float!) { updateMessage(data: { id: $id, userId: $userId, content: \\\"Updated via collection\\\" }) { id content } }\",\n  \"variables\": {\n    \"id\": {{messageId}},\n    \"userId\": {{userId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: the author updates their own message."
+          },
+          "response": []
+        },
+        {
+          "name": "Update message (sad — not found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has GraphQL errors', () => pm.expect(json.errors).to.be.an('array').that.is.not.empty);",
+                  "pm.test('error code is NOT_FOUND', () => pm.expect(json.errors[0].extensions.code).to.eql('NOT_FOUND'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation UpdateMessage($userId: Float!) { updateMessage(data: { id: 999999, userId: $userId, content: \\\"x\\\" }) { id } }\",\n  \"variables\": {\n    \"userId\": {{userId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: updating a nonexistent message throws NOT_FOUND."
+          },
+          "response": []
+        },
+        {
+          "name": "Update message (sad — not the author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has GraphQL errors', () => pm.expect(json.errors).to.be.an('array').that.is.not.empty);",
+                  "pm.test('error code is FORBIDDEN', () => pm.expect(json.errors[0].extensions.code).to.eql('FORBIDDEN'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation UpdateMessage($id: Float!) { updateMessage(data: { id: $id, userId: 999999, content: \\\"Hacked\\\" }) { id } }\",\n  \"variables\": {\n    \"id\": {{messageId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: a non-owner cannot update the message."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete message (sad — not the author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has GraphQL errors', () => pm.expect(json.errors).to.be.an('array').that.is.not.empty);",
+                  "pm.test('error code is FORBIDDEN', () => pm.expect(json.errors[0].extensions.code).to.eql('FORBIDDEN'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation DeleteMessage($id: Float!) { deleteMessage(data: { id: $id, userId: 999999 }) { id } }\",\n  \"variables\": {\n    \"id\": {{messageId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: a non-owner cannot delete the message."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete message (happy — owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('message id matches', () => pm.expect(String(json.data.deleteMessage.id)).to.eql(String(pm.environment.get('messageId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation DeleteMessage($id: Float!, $userId: Float!) { deleteMessage(data: { id: $id, userId: $userId }) { id } }\",\n  \"variables\": {\n    \"id\": {{messageId}},\n    \"userId\": {{userId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: the author deletes their own message."
+          },
+          "response": []
+        },
+        {
+          "name": "Get message by id (sad — deleted)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('returns null after deletion', () => pm.expect(json.data.getMessage).to.be.null);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetMessage($id: Float!) { getMessage(id: $id) { id } }\",\n  \"variables\": {\n    \"id\": {{messageId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: the deleted message no longer resolves."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "Delete second user (happy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation DeleteUser($id: Float!) { deleteUser(data: { id: $id }) { id } }\",\n  \"variables\": {\n    \"id\": {{secondUserId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: removes the second (setup) user created earlier in the Users folder."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user (happy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no GraphQL errors', () => pm.expect(json.errors).to.be.undefined);",
+                  "pm.test('user id matches', () => pm.expect(String(json.data.deleteUser.id)).to.eql(String(pm.environment.get('userId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation DeleteUser($id: Float!) { deleteUser(data: { id: $id }) { id } }\",\n  \"variables\": {\n    \"id\": {{userId}}\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Happy path: removes the test user created by this collection run."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user (sad — not found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has GraphQL errors', () => pm.expect(json.errors).to.be.an('array').that.is.not.empty);",
+                  "pm.test('error code is NOT_FOUND', () => pm.expect(json.errors[0].extensions.code).to.eql('NOT_FOUND'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation { deleteUser(data: { id: 999999 }) { id } }\",\n  \"variables\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Sad path: deleting a nonexistent user throws NOT_FOUND."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3333"
+    }
+  ]
+}

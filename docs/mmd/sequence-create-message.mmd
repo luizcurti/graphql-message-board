@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor User
+    participant Board as Board page (useMessages)
+    participant API as GraphQL API
+    participant Svc as MessageService
+    participant DB as SQLite
+    participant PubSub
+    participant Sub as Other connected clients
+
+    User->>Board: write message, click Send
+    Board->>API: mutation createMessage(userId, content)
+    API->>Svc: create(userId, content)
+    Svc->>DB: INSERT INTO messages
+    DB-->>Svc: saved message
+    Svc->>PubSub: publish("messageAdded", message)
+    PubSub-->>Sub: subscription messageAdded push
+    Svc-->>API: Message
+    API-->>Board: { id, content, userId }
+    Board->>API: refetch getMessages(page=1)
+    API->>Svc: findAll(1, limit)
+    Svc->>DB: SELECT messages ...
+    API-->>Board: paginated items
+
+    note over Board,API: Message.user field is resolved lazily<br/>via UserLoader (DataLoader), batching all<br/>author lookups for the page into one query

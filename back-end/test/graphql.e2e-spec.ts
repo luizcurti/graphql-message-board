@@ -29,7 +29,7 @@ describe('GraphQL API (e2e)', () => {
   // ─────────────────────────────────────────────────────────
 
   describe('Stats', () => {
-    it('getStats — deve retornar contagem de usuários e mensagens', async () => {
+    it('getStats — returns the count of users and messages', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({ query: '{ getStats { users messages } }' })
@@ -40,7 +40,7 @@ describe('GraphQL API (e2e)', () => {
       expect(typeof body.data.getStats.messages).toBe('number');
     });
 
-    it('getStats — totais devem refletir criação e deleção de dados', async () => {
+    it('getStats — totals reflect data creation and deletion', async () => {
       const before = await request(app.getHttpServer())
         .post(gql)
         .send({ query: '{ getStats { users messages } }' });
@@ -48,7 +48,7 @@ describe('GraphQL API (e2e)', () => {
       const usersBefore = before.body.data.getStats.users;
       const msgsBefore = before.body.data.getStats.messages;
 
-      // Cria user e mensagem
+      // Create a user and a message
       const { body: uBody } = await request(app.getHttpServer())
         .post(gql)
         .send({ query: 'mutation { createOrLoginUser(data: { email: "stats-test@example.com" }) { id } }' });
@@ -66,7 +66,7 @@ describe('GraphQL API (e2e)', () => {
       expect(after.body.data.getStats.users).toBeGreaterThan(usersBefore);
       expect(after.body.data.getStats.messages).toBeGreaterThan(msgsBefore);
 
-      // Limpa
+      // Clean up
       await request(app.getHttpServer()).post(gql)
         .send({ query: `mutation { deleteMessage(data: { id: ${statsMsgId}, userId: ${statsUserId} }) { id } }` });
       await request(app.getHttpServer()).post(gql)
@@ -88,7 +88,7 @@ describe('GraphQL API (e2e)', () => {
   describe('Users', () => {
     let createdUserId: number;
 
-    it('createOrLoginUser — deve criar um novo usuário', async () => {
+    it('createOrLoginUser — creates a new user', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -109,7 +109,7 @@ describe('GraphQL API (e2e)', () => {
       createdUserId = body.data.createOrLoginUser.id;
     });
 
-    it('createOrLoginUser — deve retornar o mesmo usuário ao logar novamente (email duplicado)', async () => {
+    it('createOrLoginUser — returns the same user when logging in again (duplicate email)', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -128,7 +128,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.createOrLoginUser.id).toBe(createdUserId);
     });
 
-    it('createOrLoginUser — deve rejeitar email inválido', async () => {
+    it('createOrLoginUser — rejects an invalid email', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -146,7 +146,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.errors).toBeDefined();
     });
 
-    it('getUsers — deve retornar lista paginada de usuários', async () => {
+    it('getUsers — returns a paginated list of users', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -171,7 +171,7 @@ describe('GraphQL API (e2e)', () => {
       expect(Array.isArray(body.data.getUsers.items)).toBe(true);
     });
 
-    it('getUsers — deve respeitar o limit e retornar apenas 1 item por página', async () => {
+    it('getUsers — respects the limit and returns only 1 item per page', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({ query: '{ getUsers(page: 1, limit: 1) { total page pages items { id } } }' })
@@ -182,8 +182,8 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.getUsers.pages).toBeGreaterThanOrEqual(1);
     });
 
-    it('getUsers — page 2 deve retornar itens diferentes da page 1', async () => {
-      // Garante pelo menos 2 usuários (usa os criados pelos outros testes)
+    it('getUsers — page 2 returns different items than page 1', async () => {
+      // Relies on at least 2 users existing (created by the other tests)
       const page1 = await request(app.getHttpServer())
         .post(gql)
         .send({ query: '{ getUsers(page: 1, limit: 1) { items { id } } }' });
@@ -193,13 +193,13 @@ describe('GraphQL API (e2e)', () => {
 
       const id1 = page1.body.data.getUsers.items[0]?.id;
       const id2 = page2.body.data.getUsers.items[0]?.id;
-      // Se existem pelo menos 2 usuários, devem ser diferentes
+      // If at least 2 users exist, they must differ
       if (id2 !== undefined) {
         expect(id1).not.toBe(id2);
       }
     });
 
-    it('getUser — deve retornar usuário pelo id', async () => {
+    it('getUser — returns a user by id', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -219,7 +219,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.getUser.email).toBe('test@example.com');
     });
 
-    it('getUser — deve retornar null para id inexistente', async () => {
+    it('getUser — returns null for a nonexistent id', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -238,7 +238,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.getUser).toBeNull();
     });
 
-    it('updateUser — deve atualizar o email do usuário', async () => {
+    it('updateUser — updates the user email', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -257,7 +257,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.updateUser.email).toBe('updated@example.com');
     });
 
-    it('updateUser — deve retornar erro para usuário inexistente', async () => {
+    it('updateUser — returns an error for a nonexistent user', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -275,8 +275,8 @@ describe('GraphQL API (e2e)', () => {
       expect(body.errors[0].message).toBe('User not found');
     });
 
-    it('updateUser — deve rejeitar email já utilizado por outro usuário', async () => {
-      // Criar segundo usuário
+    it('updateUser — rejects an email already used by another user', async () => {
+      // Create a second user
       await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -300,7 +300,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.errors[0].message).toContain('already in use');
     });
 
-    it('deleteUser — deve deletar o usuário', async () => {
+    it('deleteUser — deletes the user', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -319,7 +319,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.deleteUser.id).toBe(createdUserId);
     });
 
-    it('deleteUser — deve retornar erro para usuário inexistente', async () => {
+    it('deleteUser — returns an error for a nonexistent user', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -347,7 +347,7 @@ describe('GraphQL API (e2e)', () => {
     let messageId: number;
 
     beforeAll(async () => {
-      // Cria um usuário para as mensagens
+      // Create a user to own the messages
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -356,13 +356,13 @@ describe('GraphQL API (e2e)', () => {
       userId = body.data.createOrLoginUser.id;
     });
 
-    it('createMessage — deve criar uma mensagem', async () => {
+    it('createMessage — creates a message', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
           query: `
             mutation {
-              createMessage(data: { content: "Olá mundo!", userId: ${userId} }) {
+              createMessage(data: { content: "Hello world!", userId: ${userId} }) {
                 id
                 content
                 userId
@@ -373,12 +373,12 @@ describe('GraphQL API (e2e)', () => {
         .expect(200);
 
       expect(body.errors).toBeUndefined();
-      expect(body.data.createMessage.content).toBe('Olá mundo!');
+      expect(body.data.createMessage.content).toBe('Hello world!');
       expect(body.data.createMessage.userId).toBe(userId);
       messageId = body.data.createMessage.id;
     });
 
-    it('createMessage — deve rejeitar conteúdo vazio', async () => {
+    it('createMessage — rejects empty content', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -395,7 +395,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.errors).toBeDefined();
     });
 
-    it('createMessage — deve rejeitar conteúdo com mais de 500 caracteres', async () => {
+    it('createMessage — rejects content longer than 500 characters', async () => {
       const longContent = 'x'.repeat(501);
       const { body } = await request(app.getHttpServer())
         .post(gql)
@@ -407,7 +407,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.errors).toBeDefined();
     });
 
-    it('getMessages — deve retornar lista paginada de mensagens', async () => {
+    it('getMessages — returns a paginated list of messages', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -433,7 +433,7 @@ describe('GraphQL API (e2e)', () => {
       expect(Array.isArray(body.data.getMessages.items)).toBe(true);
     });
 
-    it('getMessages — deve respeitar limit e retornar apenas 1 item por página', async () => {
+    it('getMessages — respects the limit and returns only 1 item per page', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({ query: '{ getMessages(page: 1, limit: 1) { total page pages items { id } } }' })
@@ -443,7 +443,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.getMessages.items.length).toBe(1);
     });
 
-    it('getMessagesFromUser — deve retornar mensagens de um usuário específico', async () => {
+    it('getMessagesFromUser — returns messages for a specific user', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -469,7 +469,7 @@ describe('GraphQL API (e2e)', () => {
       });
     });
 
-    it('getMessagesFromUser — deve retornar lista vazia para userId sem mensagens', async () => {
+    it('getMessagesFromUser — returns an empty list for a userId with no messages', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -489,12 +489,12 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.getMessagesFromUser.items).toHaveLength(0);
     });
 
-    it('getMessagesFromUser — deve respeitar limit e paginar corretamente', async () => {
-      // Cria 3 mensagens adicionais para garantir paginação
+    it('getMessagesFromUser — respects the limit and paginates correctly', async () => {
+      // Create 3 additional messages to guarantee pagination
       await request(app.getHttpServer()).post(gql)
-        .send({ query: `mutation { createMessage(data: { content: "msg pag 1", userId: ${userId} }) { id } }` });
+        .send({ query: `mutation { createMessage(data: { content: "page msg 1", userId: ${userId} }) { id } }` });
       await request(app.getHttpServer()).post(gql)
-        .send({ query: `mutation { createMessage(data: { content: "msg pag 2", userId: ${userId} }) { id } }` });
+        .send({ query: `mutation { createMessage(data: { content: "page msg 2", userId: ${userId} }) { id } }` });
 
       const page1 = await request(app.getHttpServer())
         .post(gql)
@@ -505,7 +505,7 @@ describe('GraphQL API (e2e)', () => {
       expect(page1.body.data.getMessagesFromUser.pages).toBeGreaterThan(1);
     });
 
-    it('getMessage — deve retornar mensagem pelo id', async () => {
+    it('getMessage — returns a message by id', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -523,10 +523,10 @@ describe('GraphQL API (e2e)', () => {
 
       expect(body.errors).toBeUndefined();
       expect(body.data.getMessage.id).toBe(messageId);
-      expect(body.data.getMessage.content).toBe('Olá mundo!');
+      expect(body.data.getMessage.content).toBe('Hello world!');
     });
 
-    it('getMessage — deve retornar null para id inexistente', async () => {
+    it('getMessage — returns null for a nonexistent id', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -544,13 +544,13 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.getMessage).toBeNull();
     });
 
-    it('updateMessage — deve atualizar o conteúdo da mensagem', async () => {
+    it('updateMessage — updates the message content', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
           query: `
             mutation {
-              updateMessage(data: { id: ${messageId}, userId: ${userId}, content: "Mensagem atualizada" }) {
+              updateMessage(data: { id: ${messageId}, userId: ${userId}, content: "Updated message" }) {
                 id
                 content
               }
@@ -560,10 +560,10 @@ describe('GraphQL API (e2e)', () => {
         .expect(200);
 
       expect(body.errors).toBeUndefined();
-      expect(body.data.updateMessage.content).toBe('Mensagem atualizada');
+      expect(body.data.updateMessage.content).toBe('Updated message');
     });
 
-    it('updateMessage — deve retornar erro para mensagem inexistente', async () => {
+    it('updateMessage — returns an error for a nonexistent message', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -581,7 +581,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.errors[0].message).toBe('Message not found');
     });
 
-    it('updateMessage — deve retornar erro ao editar mensagem de outro usuário', async () => {
+    it('updateMessage — returns an error when editing another user\'s message', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -599,7 +599,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.errors[0].message).toContain('not the author');
     });
 
-    it('deleteMessage — deve retornar erro ao deletar mensagem de outro usuário', async () => {
+    it('deleteMessage — returns an error when deleting another user\'s message', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -616,7 +616,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.errors).toBeDefined();
     });
 
-    it('deleteMessage — deve deletar a mensagem', async () => {
+    it('deleteMessage — deletes the message', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -635,7 +635,7 @@ describe('GraphQL API (e2e)', () => {
       expect(body.data.deleteMessage.id).toBe(messageId);
     });
 
-    it('getMessage — deve retornar null após deletar', async () => {
+    it('getMessage — returns null after deletion', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -649,7 +649,7 @@ describe('GraphQL API (e2e)', () => {
   });
 
   // ─────────────────────────────────────────────────────────
-  // RESOLUÇÃO DE CAMPO (user dentro de message)
+  // FIELD RESOLUTION (user within message)
   // ─────────────────────────────────────────────────────────
 
   describe('ResolveField — Message.user', () => {
@@ -669,7 +669,7 @@ describe('GraphQL API (e2e)', () => {
         });
     });
 
-    it('getMessages — deve resolver o campo user via DataLoader', async () => {
+    it('getMessages — resolves the user field via DataLoader', async () => {
       const { body } = await request(app.getHttpServer())
         .post(gql)
         .send({
@@ -698,6 +698,30 @@ describe('GraphQL API (e2e)', () => {
         expect(msg.user.id).toBeDefined();
         expect(msg.user.email).toBeDefined();
       });
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────
+  // MALFORMED / INVALID REQUESTS
+  // ─────────────────────────────────────────────────────────
+
+  describe('Malformed requests', () => {
+    it('returns a GraphQL error for a syntactically invalid query', async () => {
+      const { body } = await request(app.getHttpServer())
+        .post(gql)
+        .send({ query: '{ getStats { users' })
+        .expect(400);
+
+      expect(body.errors).toBeDefined();
+    });
+
+    it('returns a GraphQL error for an unknown field', async () => {
+      const { body } = await request(app.getHttpServer())
+        .post(gql)
+        .send({ query: '{ thisFieldDoesNotExist }' })
+        .expect(400);
+
+      expect(body.errors).toBeDefined();
     });
   });
 });

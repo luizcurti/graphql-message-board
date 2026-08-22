@@ -53,9 +53,11 @@ export class createMessages1585025829086 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.createTable(this.table);
+    await queryRunner.createForeignKey('messages', this.foreignKey);
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
+    await queryRunner.dropForeignKey('messages', this.foreignKey);
     await queryRunner.dropTable(this.table);
   }
 }

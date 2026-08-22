@@ -8,113 +8,57 @@ import {
   Subscription,
   Context,
 } from '@nestjs/graphql';
-import { PubSub } from 'graphql-subscriptions';
-import { GraphQLError } from 'graphql';
-import RepoService from '../repo.service';
+import MessageService from '../services/message.service';
 import Message from '../db/models/message.entity';
 import MessageInput, { DeleteMessageInput, UpdateMessageInput } from './input/message.input';
 import User from '../db/models/user.entity';
 import { GQLContext } from '../db/loaders';
-import { PaginationArgs } from './input/pagination.args';
+import { PaginationArgs, GetMessagesFromUserArgs } from './input/pagination.args';
 import { PaginatedMessages } from './types/paginated-messages.type';
-
-export const pubSub = new PubSub();
+import { pubSub } from '../pubsub';
 
 @Resolver(() => Message)
 export default class MessageResolver {
-  constructor(private readonly repoService: RepoService) {}
+  constructor(private readonly messageService: MessageService) {}
 
   @Query(() => PaginatedMessages)
   public async getMessages(
     @Args() { page, limit }: PaginationArgs,
   ): Promise<PaginatedMessages> {
-    const [items, total] = await this.repoService.messageRepo.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: 'DESC' },
-    });
-
-    return { items, total, page, pages: Math.ceil(total / limit) || 1 };
+    return this.messageService.findAll(page, limit);
   }
 
   @Query(() => PaginatedMessages)
   public async getMessagesFromUser(
-    @Args('userId') userId: number,
-    @Args() { page, limit }: PaginationArgs,
+    @Args() { userId, page, limit }: GetMessagesFromUserArgs,
   ): Promise<PaginatedMessages> {
-    const [items, total] = await this.repoService.messageRepo.findAndCount({
-      where: { userId },
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: 'DESC' },
-    });
-
-    return { items, total, page, pages: Math.ceil(total / limit) || 1 };
+    return this.messageService.findByUser(userId, page, limit);
   }
 
   @Query(() => Message, { nullable: true })
-  public async getMessage(@Args('id') id: number): Promise<Message> {
-    return this.repoService.messageRepo.findOne({ where: { id } });
+  public async getMessage(@Args('id') id: number): Promise<Message | null> {
+    return this.messageService.findOne(id);
   }
 
   @Mutation(() => Message)
   public async createMessage(
     @Args('data') input: MessageInput,
   ): Promise<Message> {
-    const message = this.repoService.messageRepo.create({
-      userId: input.userId,
-      content: input.content,
-    });
-
-    const response = await this.repoService.messageRepo.save(message);
-
-    pubSub.publish('messageAdded', { messageAdded: message });
-
-    return response;
+    return this.messageService.create(input.userId, input.content);
   }
 
   @Mutation(() => Message)
   public async updateMessage(
     @Args('data') input: UpdateMessageInput,
   ): Promise<Message> {
-    const message = await this.repoService.messageRepo.findOne({
-      where: { id: input.id },
-    });
-
-    if (!message) {
-      throw new GraphQLError('Message not found', {
-        extensions: { code: 'NOT_FOUND' },
-      });
-    }
-
-    if (message.userId !== input.userId) {
-      throw new GraphQLError('You are not the author of this message', {
-        extensions: { code: 'FORBIDDEN' },
-      });
-    }
-
-    message.content = input.content;
-    return this.repoService.messageRepo.save(message);
+    return this.messageService.update(input.id, input.userId, input.content);
   }
 
   @Mutation(() => Message)
   public async deleteMessage(
     @Args('data') input: DeleteMessageInput,
   ): Promise<Message> {
-    const message = await this.repoService.messageRepo.findOne({ where: { id: input.id } });
-
-    if (!message || message.userId !== input.userId) {
-      throw new GraphQLError(
-        'Message does not exist or you are not the message author',
-        { extensions: { code: 'FORBIDDEN' } },
-      );
-    }
-
-    const copy = { ...message };
-
-    await this.repoService.messageRepo.remove(message);
-
-    return copy;
+    return this.messageService.remove(input.id, input.userId);
   }
 
   @Subscription(() => Message)

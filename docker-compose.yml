@@ -1,0 +1,34 @@
+name: graphql-message-board
+
+services:
+  backend:
+    build: ./back-end
+    ports:
+      - "3333:3333"
+    volumes:
+      - backend-data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-qO-",
+          "--header=Content-Type: application/json",
+          "--post-data={\"query\":\"{ __typename }\"}",
+          "http://localhost:3333/graphql",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  frontend:
+    build: ./front-end
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  backend-data:

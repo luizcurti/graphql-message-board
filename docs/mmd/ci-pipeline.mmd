@@ -1,0 +1,23 @@
+flowchart TD
+    Trigger(["push / pull_request → main"])
+
+    subgraph J1["back-end job"]
+        B1["npm ci"] --> B2["lint"] --> B3["build"] --> B4["unit tests"] --> B5["e2e tests"]
+    end
+
+    subgraph J2["front-end job"]
+        F1["npm ci"] --> F2["unit tests"] --> F3["build"]
+    end
+
+    subgraph J3["collection job"]
+        C1["npm ci (back-end)"] --> C2["start server (background)"] --> C3["wait for /graphql"] --> C4["newman run<br/>postman collection"]
+    end
+
+    subgraph J4["integration job"]
+        D1["docker compose up --build -d"] --> D2["wait for backend + frontend"] --> D3["bash e2e-integration-test.sh"] --> D4["playwright test<br/>(real browser vs real stack)"] --> D5["docker compose down -v"]
+    end
+
+    Trigger --> J1
+    Trigger --> J2
+    Trigger --> J3
+    Trigger --> J4

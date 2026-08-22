@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import StatsResolver from './resolvers/stats.resolver';
-import RepoService from './repo.service';
+import StatsResolver from './stats.resolver';
+import RepoService from '../repo.service';
 
 describe('StatsResolver', () => {
   let resolver: StatsResolver;
@@ -28,7 +28,7 @@ describe('StatsResolver', () => {
   });
 
   describe('getStats', () => {
-    it('deve retornar contagem de usuários e mensagens', async () => {
+    it('returns the count of users and messages', async () => {
       mockRepoService.userRepo.count.mockResolvedValue(3);
       mockRepoService.messageRepo.count.mockResolvedValue(7);
 
@@ -37,7 +37,7 @@ describe('StatsResolver', () => {
       expect(result).toEqual({ users: 3, messages: 7 });
     });
 
-    it('deve retornar zeros quando não há dados', async () => {
+    it('returns zeros when there is no data', async () => {
       mockRepoService.userRepo.count.mockResolvedValue(0);
       mockRepoService.messageRepo.count.mockResolvedValue(0);
 
