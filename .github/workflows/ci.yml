@@ -8,7 +8,7 @@ on:
 
 jobs:
   back-end:
-    name: Back-end (lint, build, test)
+    name: Back-end (audit, lint, typecheck, build, test)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -23,8 +23,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Security audit (runtime dependencies)
+        run: npm audit --omit=dev --audit-level=critical
+
       - name: Lint
         run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
 
       - name: Build
         run: npm run build
@@ -36,7 +42,7 @@ jobs:
         run: npm run test:e2e -- --ci
 
   front-end:
-    name: Front-end (build, test)
+    name: Front-end (audit, typecheck, build, test)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -50,6 +56,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Security audit (runtime dependencies)
+        run: npm audit --omit=dev --audit-level=critical
+
+      - name: Typecheck
+        run: npx tsc --noEmit
 
       - name: Unit tests
         run: npm test -- --watchAll=false

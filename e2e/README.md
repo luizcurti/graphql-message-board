@@ -38,6 +38,7 @@ FRONTEND_URL=http://localhost:3000 BACKEND_URL=http://localhost:3333 npm test
 | Test | Path |
 |---|---|
 | Register → send a message → see it rendered → confirm it's in the DB → delete it → confirm it's gone from the DB | Happy path, full round trip |
+| A message sent by one user (one browser context) appears live on another user's board (a separate context, never reloaded) | Real-time — `messageAdded` subscription over WebSocket (`graphql-ws`) |
 | Submit the login form with no e-mail | Sad path — `alert()`, no navigation |
 | Send an empty message | Sad path — `alert()`, message not created |
 

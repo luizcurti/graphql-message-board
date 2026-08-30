@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery, useSubscription } from '@apollo/client';
 import {
   GET_ALL_MESSAGES,
   CREATE_MESSAGE,
   DELETE_MESSAGE,
+  MESSAGE_ADDED,
   IGetMessagesData,
   IGetMessagesVars,
   ICreateMessageVars,
   IDeleteMessageVars,
+  IMessageAddedData,
 } from '../graphql/message';
 
 const PAGE_LIMIT = 10;
@@ -34,6 +36,10 @@ export function useMessages(userId: number) {
   const [deleteMessage] = useMutation<unknown, IDeleteMessageVars>(DELETE_MESSAGE, {
     onCompleted: () => refetch({ page, limit: PAGE_LIMIT }),
     onError: (err) => alert(err.message),
+  });
+
+  useSubscription<IMessageAddedData>(MESSAGE_ADDED, {
+    onData: () => refetch({ page, limit: PAGE_LIMIT }),
   });
 
   function sendMessage(content: string) {

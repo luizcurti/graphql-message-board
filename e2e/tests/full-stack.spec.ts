@@ -82,6 +82,44 @@ test.describe('Full-stack round trip (real front-end + real back-end)', () => {
     }
   });
 
+  test('real-time: a message sent by one user appears live for another user with no reload or action', async ({
+    page,
+    request,
+    browser,
+  }) => {
+    const emailA = `pw-live-a-${Date.now()}@example.com`;
+    const emailB = `pw-live-b-${Date.now()}@example.com`;
+    const content = `Live subscription message ${Date.now()}`;
+
+    const userIdA = await createUserDirectly(request, emailA);
+    const userIdB = await createUserDirectly(request, emailB);
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+
+    try {
+      // User A's board, driven by the default `page` fixture.
+      await page.goto(`/dashboard?id=${userIdA}`);
+
+      // User B's board, in a fully separate browser context/session — it is never
+      // reloaded or interacted with again after this point.
+      await pageB.goto(`/dashboard?id=${userIdB}`);
+      await expect(pageB.getByText('No messages yet. Be the first to write one!')).toBeVisible();
+
+      // User A sends a message through the real UI.
+      await page.getByPlaceholder('Write a message...').fill(content);
+      await page.getByRole('button', { name: 'Send' }).click();
+      await expect(page.getByText(content)).toBeVisible();
+
+      // It must reach User B's board over the messageAdded GraphQL subscription —
+      // not a manual refresh, not an action B took.
+      await expect(pageB.getByText(content)).toBeVisible({ timeout: 5000 });
+    } finally {
+      await contextB.close();
+      await deleteUser(request, userIdA);
+      await deleteUser(request, userIdB);
+    }
+  });
+
   test('sad path: submitting the login form with no e-mail alerts and does not navigate', async ({ page }) => {
     let alertMessage = '';
     page.once('dialog', (dialog) => {

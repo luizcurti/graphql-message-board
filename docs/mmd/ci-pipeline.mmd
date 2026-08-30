@@ -2,11 +2,11 @@ flowchart TD
     Trigger(["push / pull_request → main"])
 
     subgraph J1["back-end job"]
-        B1["npm ci"] --> B2["lint"] --> B3["build"] --> B4["unit tests"] --> B5["e2e tests"]
+        B1["npm ci"] --> B1a["npm audit"] --> B2["lint"] --> B2a["typecheck"] --> B3["build"] --> B4["unit tests"] --> B5["e2e tests"]
     end
 
     subgraph J2["front-end job"]
-        F1["npm ci"] --> F2["unit tests"] --> F3["build"]
+        F1["npm ci"] --> F1a["npm audit"] --> F1b["typecheck"] --> F2["unit tests"] --> F3["build"]
     end
 
     subgraph J3["collection job"]

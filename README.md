@@ -2,7 +2,7 @@
 GraphQL Message Board
 </h1>
 
-<p align="center">Full-stack GraphQL message board — NestJS backend, React frontend, running together as one system.</p>
+<p align="center">A GraphQL subscription (`messageAdded`) pushing live updates from a NestJS/TypeORM backend all the way to a React/Apollo Client UI — the full real-time round trip, front to back, running together as one system.</p>
 
 ## 🚀 Technologies
 
@@ -31,6 +31,15 @@ cd nestjs-graphql
 cd back-end && npm install
 cd ../front-end && npm install
 ```
+
+## 🔐 Environment variables
+
+Neither app requires environment variables to run locally or via Docker Compose — every value below has a working default.
+
+| App | Variable | Default | Purpose |
+|---|---|---|---|
+| Backend | `NODE_ENV` | unset (dev) | `production` disables the GraphQL Playground; `test` switches to an in-memory SQLite DB (used automatically by the test suites) |
+| Frontend | `REACT_APP_GRAPHQL_URL` | `http://localhost:3333/graphql` | GraphQL endpoint the SPA sends queries/mutations to; the WebSocket URL for the `messageAdded` subscription is derived from it automatically (`http`→`ws`, `https`→`wss`). Baked in at build time (Create React App convention) — set it in `front-end/.env` (see [`.env.example`](front-end/.env.example)) if the API is hosted anywhere other than `localhost:3333` |
 
 ## 🏃 Running the application
 
@@ -156,11 +165,11 @@ cd e2e && npm install && npx playwright install --with-deps chromium && npm test
 | `front-end/src/pages/*/index.test.tsx` | Unit | `Home`, `Board` rendering + interaction |
 | `docs/postman/*.postman_collection.json` | Collection | Every query/mutation, one happy + one sad request each |
 | `e2e-integration-test.sh` | Integration | Front + back running together (routes, GraphQL, DataLoader, pagination, ownership) |
-| `e2e/tests/full-stack.spec.ts` | Browser E2E | Real browser: type into the actual form, submit, confirm the backend stored it, confirm it renders back |
+| `e2e/tests/full-stack.spec.ts` | Browser E2E | Real browser: type into the actual form, submit, confirm the backend stored it, confirm it renders back; two independent browser sessions to prove the `messageAdded` subscription delivers live updates |
 
-> **Why a separate browser layer?** Everything above either talks to the API directly (curl, supertest) or renders components against a *mocked* Apollo Client — none of them go through a real browser's network stack. The Playwright suite is what actually caught that the backend had no CORS policy: the real browser was silently blocking every request from the SPA to the API with `Failed to fetch`, invisible to every other test layer. It also caught a broken migration (see below). See [`e2e/README.md`](e2e/README.md).
+> **Why a separate browser layer?** Everything above either talks to the API directly (curl, supertest) or renders components against a *mocked* Apollo Client — none of them go through a real browser's network stack, and none of them open a second, independent client to observe what a *different* user sees. The Playwright suite is what actually caught that the backend had no CORS policy, and that the subscription feature — real on the backend — was never wired up on the frontend at all (see below). See [`e2e/README.md`](e2e/README.md).
 
-**Bugs this pass found and fixed** (each only surfaced once the system was tested as a whole, not before): fresh databases had no tables (migrations were never run automatically, and the `typeorm` CLI script was broken for TypeORM 0.3); `getMessagesFromUser` threw under the real `ValidationPipe` config due to how NestJS merges multiple `@Args()` decorators; the backend had no CORS policy, so the real front-end couldn't reach it from a browser at all; and the `messages → users` foreign key was declared in a migration but never actually created, so deleting a user silently orphaned their messages instead of cascading.
+**Bugs this pass found and fixed** (each only surfaced once the system was tested as a whole, not before): fresh databases had no tables (migrations were never run automatically, and the `typeorm` CLI script was broken for TypeORM 0.3); `getMessagesFromUser` threw under the real `ValidationPipe` config due to how NestJS merges multiple `@Args()` decorators; the backend had no CORS policy, so the real front-end couldn't reach it from a browser at all; the `messages → users` foreign key was declared in a migration but never actually created, so deleting a user silently orphaned their messages instead of cascading; the Google Fonts `@import` lived inside `createGlobalStyle`, which styled-components silently drops in production builds — the app always fell back to the browser's default sans-serif font with no error; and the `messageAdded` subscription was fully implemented on the backend (schema, resolver, PubSub) but the frontend's Apollo Client was HTTP-only, so real-time updates across tabs/users — a documented feature — never actually worked. Fixed by switching the backend from the deprecated `subscriptions-transport-ws` to `graphql-ws` and wiring up a `split` link on the frontend; verified with a two-browser-context Playwright test.
 
 ## 📊 Documentation & diagrams
 
@@ -230,7 +239,12 @@ subscription {
 
 ## 🛡️ Security notes
 
-`npm audit` on both apps shows only dev-tooling vulnerabilities — transitive dependencies of `react-scripts` (front-end build tooling), `node-gyp`/`tar` (native module compilation for `sqlite3`), and `newman`/`handlebars` (CI-only collection runner) — none of them ship in the running application. Package versions were kept within their current major (no breaking upgrades); the one runtime-reachable advisory (a `react-router` open-redirect fix requiring a v7 major bump) was deliberately deferred for the same reason and noted here for visibility.
+`npm audit` was run on both apps and reviewed dependency-by-dependency rather than taken at face value:
+
+- **Frontend**: every finding traces back to `react-scripts`' own build-time tooling (webpack-dev-server, jest, etc.) — none of it is bundled into the production build. The one advisory that *is* runtime-reachable is `react-router`'s open-redirect fix, which requires a v7 major bump; it was deliberately deferred to avoid a breaking upgrade and is called out here for visibility.
+- **Backend**: most findings are dev-only (`newman`, the Postman collection runner used only in CI). A smaller set is genuinely reachable at runtime through NestJS's own transitive dependencies (`multer`, `qs`/`body-parser`, `uuid`, `@apollo/server`). Two of them — `lodash` (used internally by `@nestjs/graphql`'s schema building on every boot) and `ws` (the WebSocket library backing the `messageAdded` subscription) — were fixed in place via scoped `overrides` in `back-end/package.json`, since patched versions exist within the same major and required no code changes. The rest require a major-version bump across `@nestjs/core`, `@nestjs/platform-express`, `@nestjs/graphql`, and `@apollo/server` together; that migration was deliberately deferred rather than rushed in as a breaking, multi-package upgrade, and is tracked here for visibility. None of them are reachable through this API's actual surface today — there are no REST file-upload endpoints (rules out `multer`), and inputs are validated GraphQL types, not raw query strings (rules out `qs`).
+
+Run `npm audit` (or `npm audit --omit=dev` to see only what ships) in either app to see current, live results — this section reflects a point-in-time review, not a standing guarantee.
 
 ## 📚 Documentation
 

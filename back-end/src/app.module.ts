@@ -24,7 +24,9 @@ const gqlImports = [UserResolver, MessageResolver, StatsResolver];
       useFactory: (dataSource: DataSource) => ({
         autoSchemaFile: 'schema.gql',
         playground: process.env.NODE_ENV !== 'production',
-        installSubscriptionHandlers: true,
+        subscriptions: {
+          'graphql-ws': true,
+        },
         context: createContext(dataSource),
       }),
     }),

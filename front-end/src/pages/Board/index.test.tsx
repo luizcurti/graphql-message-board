@@ -3,14 +3,29 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import Board from './index';
-import { GET_ALL_MESSAGES, CREATE_MESSAGE } from '../../graphql/message';
+import { GET_ALL_MESSAGES, CREATE_MESSAGE, MESSAGE_ADDED } from '../../graphql/message';
 
 const USER_ID = 1;
 
+// The Board page subscribes to MESSAGE_ADDED on mount; this mock just needs to be
+// present so MockedProvider has a match for it. It never resolves during these tests.
+const MESSAGE_ADDED_MOCK: MockedResponse = {
+  request: { query: MESSAGE_ADDED },
+  result: {
+    data: {
+      messageAdded: { id: 0, content: '', userId: 0, user: { email: '' } },
+    },
+  },
+  delay: Infinity,
+};
+
 function renderBoard(mocks: MockedResponse[]) {
   return render(
-    <MemoryRouter initialEntries={[`/dashboard?id=${USER_ID}`]}>
-      <MockedProvider mocks={mocks}>
+    <MemoryRouter
+      initialEntries={[`/dashboard?id=${USER_ID}`]}
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
+      <MockedProvider mocks={[...mocks, MESSAGE_ADDED_MOCK]}>
         <Board />
       </MockedProvider>
     </MemoryRouter>,

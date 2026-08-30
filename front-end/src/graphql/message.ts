@@ -35,6 +35,10 @@ export interface IDeleteMessageVars {
   userId: number;
 }
 
+export interface IMessageAddedData {
+  messageAdded: IMessage;
+}
+
 export const GET_ALL_MESSAGES = gql`
   query GetMessages($page: Int, $limit: Int) {
     getMessages(page: $page, limit: $limit) {
@@ -70,6 +74,19 @@ export const DELETE_MESSAGE = gql`
   mutation DeleteMessage($id: Float!, $userId: Float!) {
     deleteMessage(data: { id: $id, userId: $userId }) {
       id
+    }
+  }
+`;
+
+export const MESSAGE_ADDED = gql`
+  subscription MessageAdded {
+    messageAdded {
+      id
+      content
+      userId
+      user {
+        email
+      }
     }
   }
 `;

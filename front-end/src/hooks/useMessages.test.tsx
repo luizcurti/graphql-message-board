@@ -3,9 +3,21 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { GraphQLError } from 'graphql';
 import { useMessages } from './useMessages';
-import { GET_ALL_MESSAGES, CREATE_MESSAGE, DELETE_MESSAGE } from '../graphql/message';
+import { GET_ALL_MESSAGES, CREATE_MESSAGE, DELETE_MESSAGE, MESSAGE_ADDED } from '../graphql/message';
 
 const USER_ID = 1;
+
+// useMessages subscribes to MESSAGE_ADDED on mount; this mock just needs to be
+// present so MockedProvider has a match for it. It never resolves during these tests.
+const MESSAGE_ADDED_MOCK: MockedResponse = {
+  request: { query: MESSAGE_ADDED },
+  result: {
+    data: {
+      messageAdded: { id: 0, content: '', userId: 0, user: { email: '' } },
+    },
+  },
+  delay: Infinity,
+};
 
 const emptyListMock: MockedResponse = {
   request: { query: GET_ALL_MESSAGES, variables: { page: 1, limit: 10 } },
@@ -28,7 +40,7 @@ const oneMessageMock: MockedResponse = {
 
 function wrapper(mocks: MockedResponse[]) {
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return <MockedProvider mocks={mocks}>{children}</MockedProvider>;
+    return <MockedProvider mocks={[...mocks, MESSAGE_ADDED_MOCK]}>{children}</MockedProvider>;
   };
 }
 

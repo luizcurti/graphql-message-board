@@ -10,7 +10,7 @@ import GlobalStyles from './styles/global';
 function App() {
   return (
     <ApolloProvider client={api}>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes />
 
         <GlobalStyles />
