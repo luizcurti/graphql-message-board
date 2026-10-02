@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor User
+    participant Board as Board page (useMessages)
+    participant API as GraphQL API
+    participant Svc as MessageService
+    participant DB as SQLite
+    participant PubSub
+    participant Sub as Subscribed clients (useSubscription)
+
+    User->>Board: write message, click Send
+    note over Board: empty content → alert, no request<br/>over 500 chars → BAD_USER_INPUT
+    Board->>API: mutation createMessage(userId, content)
+    API->>Svc: create(userId, content)
+    Svc->>DB: user exists?
+    alt user not found
+        Svc-->>API: GraphQLError (NOT_FOUND)
+        API-->>Board: errors → alert("User not found")
+    end
+    Svc->>DB: INSERT INTO messages
+    DB-->>Svc: saved message
+    Svc->>PubSub: publish("messageAdded", message)
+    PubSub-->>Sub: messageAdded (WebSocket)
+    Sub->>API: refetch getMessages(current page)
+    Svc-->>API: Message
+    API-->>Board: { id, content, userId, user { email } }
+    Board->>API: refetch getMessages(page=1, limit=10)
+    API->>Svc: findAll(1, 10)
+    Svc->>DB: SELECT messages ORDER BY created_at DESC, id DESC
+    API-->>Board: paginated items
+
+    note over Board,API: Message.user is resolved via UserLoader (DataLoader),<br/>batching all author lookups for the page into one query
