@@ -1,0 +1,28 @@
+flowchart TB
+    Trigger(["push / pull_request → main"])
+
+    subgraph J1["back-end job"]
+        direction TB
+        B1["npm ci"] --> B2["npm audit (runtime, critical)"] --> B3["lint"] --> B4["typecheck"] --> B5["build"] --> B6["unit tests<br/>(100% coverage gate)"] --> B7["e2e tests"]
+    end
+
+    subgraph J2["front-end job"]
+        direction TB
+        F1["npm ci"] --> F2["npm audit (runtime, critical)"] --> F3["typecheck"] --> F4["unit tests<br/>(100% coverage gate)"] --> F5["build"]
+    end
+
+    subgraph J3["collection job"]
+        direction TB
+        C1["npm ci (back-end)"] --> C2["build"] --> C3["start server (background)"] --> C4["wait for :3333"] --> C5["newman run<br/>Postman collection"]
+    end
+
+    subgraph J4["integration job"]
+        direction TB
+        D1["docker compose up --build -d"] --> D2["wait for :3333 + :3000"] --> D3["bash e2e-integration-test.sh"] --> D4["npm ci + playwright install"] --> D5["playwright test<br/>(real browser vs real stack)"] --> D6["docker compose down -v<br/>(always)"]
+        D5 -. "on failure" .-> D7["upload report + compose logs"]
+    end
+
+    Trigger --> J1
+    Trigger --> J2
+    Trigger --> J3
+    Trigger --> J4

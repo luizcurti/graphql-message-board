@@ -1,0 +1,80 @@
+import { useState } from 'react';
+import { useMutation, useQuery, useSubscription } from '@apollo/client';
+import {
+  GET_ALL_MESSAGES,
+  CREATE_MESSAGE,
+  DELETE_MESSAGE,
+  MESSAGE_ADDED,
+  IGetMessagesData,
+  IGetMessagesVars,
+  ICreateMessageVars,
+  IDeleteMessageVars,
+  IMessageAddedData,
+} from '../graphql/message';
+
+const PAGE_LIMIT = 10;
+export const MAX_MESSAGE_LENGTH = 500;
+
+export function useMessages(userId: number) {
+  const [page, setPage] = useState<number>(1);
+
+  const { loading, data, refetch } = useQuery<IGetMessagesData, IGetMessagesVars>(
+    GET_ALL_MESSAGES,
+    { variables: { page, limit: PAGE_LIMIT } },
+  );
+
+  const [createMessage, { loading: creating }] = useMutation<unknown, ICreateMessageVars>(
+    CREATE_MESSAGE,
+    {
+      onCompleted: () => {
+        setPage(1);
+        refetch({ page: 1, limit: PAGE_LIMIT });
+      },
+      onError: (err) => alert(err.message),
+    },
+  );
+
+  const [deleteMessage] = useMutation<unknown, IDeleteMessageVars>(DELETE_MESSAGE, {
+    onCompleted: () => refetch({ page, limit: PAGE_LIMIT }),
+    onError: (err) => alert(err.message),
+  });
+
+  useSubscription<IMessageAddedData>(MESSAGE_ADDED, {
+    onData: () => refetch({ page, limit: PAGE_LIMIT }),
+  });
+
+  // Resolves true only once the server has saved the message.
+  async function sendMessage(content: string): Promise<boolean> {
+    if (!userId) {
+      alert('User not identified. Please log in again.');
+      return false;
+    }
+
+    if (content.trim().length < 1) {
+      alert('Message cannot be empty.');
+      return false;
+    }
+
+    const { data } = await createMessage({ variables: { content: content.trim(), userId } });
+    return Boolean(data);
+  }
+
+  function removeMessage(messageId: number) {
+    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    deleteMessage({ variables: { id: messageId, userId } });
+  }
+
+  const paginatedData = data?.getMessages;
+
+  return {
+    loading,
+    creating,
+    messages: paginatedData?.items ?? [],
+    total: paginatedData?.total ?? 0,
+    totalPages: paginatedData?.pages ?? 1,
+    page,
+    setPage,
+    sendMessage,
+    removeMessage,
+  };
+}
