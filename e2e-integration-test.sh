@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Full-stack checks against the running containers (docker compose up).
+# Full-stack checks against the running containers (docker compose up), or against the AWS
+# deployment (BACKEND_URL and FRONTEND_URL = the CloudFront URL; see the CI deploy job).
 GQL="${BACKEND_URL:-http://localhost:3333}/graphql"
 FRONT="${FRONTEND_URL:-http://localhost:3000}"
 RUN=$(date +%s)
@@ -60,7 +61,8 @@ check "GET /does-not-exist → 200 (React renders 404)" "$R" "200"
 BUNDLE=$(echo "$HTML" | grep -oE '/static/js/main\.[a-z0-9]+\.js' | head -1)
 R=$(curl --max-time 5 -s -o /dev/null -w "%{http_code}" "$FRONT$BUNDLE")
 check "GET $BUNDLE → 200" "$R" "200"
-check "bundle points to the API URL" "$(curl --max-time 5 -s "$FRONT$BUNDLE" | grep -o 'localhost:3333/graphql' | head -1)" "localhost:3333/graphql"
+API_HOST_PATH="${GQL#*://}" # localhost:3333/graphql locally, <cloudfront domain>/graphql on AWS
+check "bundle points to the API URL" "$(curl --max-time 5 -s "$FRONT$BUNDLE" | grep -oF "$API_HOST_PATH" | head -1)" "$API_HOST_PATH"
 check "GET missing asset → not a JS file (SPA fallback)" "$(curl --max-time 5 -s "$FRONT/static/js/missing.js" | head -c 15 | tr '[:upper:]' '[:lower:]')" "<!doctype html>"
 
 section "BACK-END (API :3333)"
@@ -133,9 +135,12 @@ node -e '
     }
     if (msg.type === "next") done(JSON.stringify(msg.payload));
   };
-' "$GQL" > "$SUB_OUT" 2>/dev/null &
+' "$GQL" > "$SUB_OUT" 2>"$SUB_OUT.ready" &
 SUB_PID=$!
-sleep 1
+# Wait until the subscription is sent (over the internet the WebSocket handshake can take a
+# while), then give the server a moment to register it.
+for _ in $(seq 1 50); do grep -q ready "$SUB_OUT.ready" 2>/dev/null && break; sleep 0.1; done
+sleep 0.5
 
 R=$(gql "$MSG_Q" "{\"userId\":$USER_ID,\"content\":\"Hello $RUN\"}")
 check "createMessage → created" "$R" "\"content\":\"Hello $RUN\""
@@ -144,7 +149,7 @@ MSG_ID=$(get "$R" "d['data']['createMessage']['id']")
 
 wait $SUB_PID
 check "messageAdded subscription (WebSocket) → pushed" "$(cat "$SUB_OUT")" "\"content\":\"Hello $RUN\""
-rm -f "$SUB_OUT"
+rm -f "$SUB_OUT" "$SUB_OUT.ready"
 
 R=$(node -e '
   const ws = new WebSocket(process.argv[1].replace(/^http/, "ws"), "graphql-transport-ws");

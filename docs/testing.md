@@ -73,3 +73,5 @@ docker compose down -v
 `.github/workflows/ci.yml` runs four parallel jobs on every push/PR to `main`:
 
 ![CI pipeline](img/ci-pipeline.png)
+
+Plus `infra` (`terraform fmt`/`validate` of `infra/` and `bootstrap/`) and, on pushes to `main` once configured, `deploy`: it deploys to AWS and runs `e2e-integration-test.sh` against the live CloudFront URL (see [Deployment](deployment.md)). [`destroy.yml`](../.github/workflows/destroy.yml) tears the AWS stack down on demand.

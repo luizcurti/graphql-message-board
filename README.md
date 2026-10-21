@@ -49,6 +49,9 @@ Every operation is tested on its happy and sad paths — see the coverage matrix
 back-end/    NestJS GraphQL API
 front-end/   React SPA
 e2e/         Playwright browser tests
+infra/       Terraform: AWS deployment (CloudFront, S3, ALB, ECS Fargate, ECR, VPC)
+bootstrap/   Terraform: one-time AWS setup for the CI deploy (state bucket, OIDC role)
+scripts/     bootstrap.sh: applies bootstrap/ and configures the GitHub environment
 docs/        Docs, diagrams (mmd/ → img/), Postman collection
 ```
 
@@ -57,5 +60,6 @@ docs/        Docs, diagrams (mmd/ → img/), Postman collection
 - [Architecture & configuration](docs/architecture.md)
 - [GraphQL API](docs/api.md)
 - [Testing & CI](docs/testing.md)
+- [Deployment (AWS)](docs/deployment.md)
 - [Security notes](docs/security.md)
 - [Backend](back-end/README.md) · [Frontend](front-end/README.md) · [Browser E2E](e2e/README.md)
